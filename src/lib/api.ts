@@ -14,6 +14,15 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage, switchToDefaultDatabase } from "./firebase";
 import { ChatSession, Message, Attachment } from "../types";
 
+let isLocalFallbackActive = false;
+
+export const setLocalFallbackActive = (active: boolean) => {
+  isLocalFallbackActive = active;
+  if (active) {
+    console.warn("Database fallback activated: operating in local-first localStorage mode.");
+  }
+};
+
 const runWithDbFallback = async <T>(fn: () => Promise<T>): Promise<T> => {
   try {
     return await fn();
@@ -58,6 +67,7 @@ export const uploadFile = async (
 const isGuestUser = (userId: string) => userId === "nvidia-guest-dev";
 
 const isGuestSessionActive = () => {
+  if (isLocalFallbackActive) return true;
   if (typeof window === "undefined") return false;
   return !!localStorage.getItem("nim_guest_user");
 };
@@ -69,23 +79,29 @@ export const getChatSessions = async (
     const data = localStorage.getItem("nim_guest_sessions");
     return data ? JSON.parse(data) : [];
   }
-  return runWithDbFallback(async () => {
-    const q = query(
-      collection(db, "sessions"),
-      where("userId", "==", userId)
-    );
+  try {
+    return await runWithDbFallback(async () => {
+      const q = query(
+        collection(db, "sessions"),
+        where("userId", "==", userId)
+      );
 
-    const querySnapshot = await getDocs(q);
-    const sessions = querySnapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        }) as ChatSession,
-    );
-    
-    return sessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-  });
+      const querySnapshot = await getDocs(q);
+      const sessions = querySnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          }) as ChatSession,
+      );
+      
+      return sessions.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    });
+  } catch (error) {
+    console.error("Firestore getChatSessions error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return getChatSessions(userId);
+  }
 };
 
 export const createChatSession = async (
@@ -108,16 +124,22 @@ export const createChatSession = async (
     localStorage.setItem("nim_guest_sessions", JSON.stringify(sessions));
     return newId;
   }
-  return runWithDbFallback(async () => {
-    const sessionRef = await addDoc(collection(db, "sessions"), {
-      userId,
-      title,
-      model,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+  try {
+    return await runWithDbFallback(async () => {
+      const sessionRef = await addDoc(collection(db, "sessions"), {
+        userId,
+        title,
+        model,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
+      return sessionRef.id;
     });
-    return sessionRef.id;
-  });
+  } catch (error) {
+    console.error("Firestore createChatSession error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return createChatSession(userId, title, model);
+  }
 };
 
 export const updateSessionSettings = async (
@@ -132,13 +154,19 @@ export const updateSessionSettings = async (
     localStorage.setItem("nim_guest_sessions", JSON.stringify(updated));
     return;
   }
-  return runWithDbFallback(async () => {
-    const updateData = {
-      ...settings,
-      updatedAt: Date.now(),
-    };
-    await updateDoc(doc(db, "sessions", sessionId), updateData);
-  });
+  try {
+    return await runWithDbFallback(async () => {
+      const updateData = {
+        ...settings,
+        updatedAt: Date.now(),
+      };
+      await updateDoc(doc(db, "sessions", sessionId), updateData);
+    });
+  } catch (error) {
+    console.error("Firestore updateSessionSettings error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return updateSessionSettings(sessionId, settings);
+  }
 };
 
 export const deleteChatSession = async (sessionId: string): Promise<void> => {
@@ -149,9 +177,15 @@ export const deleteChatSession = async (sessionId: string): Promise<void> => {
     localStorage.removeItem("nim_guest_messages_" + sessionId);
     return;
   }
-  return runWithDbFallback(async () => {
-    await deleteDoc(doc(db, "sessions", sessionId));
-  });
+  try {
+    return await runWithDbFallback(async () => {
+      await deleteDoc(doc(db, "sessions", sessionId));
+    });
+  } catch (error) {
+    console.error("Firestore deleteChatSession error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return deleteChatSession(sessionId);
+  }
 };
 
 export const saveChatSnapshot = async (
@@ -175,16 +209,22 @@ export const saveChatSnapshot = async (
     localStorage.setItem("nim_guest_snapshots", JSON.stringify(snapshots));
     return snapshotId;
   }
-  return runWithDbFallback(async () => {
-    const snapshotRef = await addDoc(collection(db, "chat_history"), {
-      userId,
-      title,
-      modelsUsed,
-      messages,
-      createdAt: Date.now()
+  try {
+    return await runWithDbFallback(async () => {
+      const snapshotRef = await addDoc(collection(db, "chat_history"), {
+        userId,
+        title,
+        modelsUsed,
+        messages,
+        createdAt: Date.now()
+      });
+      return snapshotRef.id;
     });
-    return snapshotRef.id;
-  });
+  } catch (error) {
+    console.error("Firestore saveChatSnapshot error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return saveChatSnapshot(userId, title, modelsUsed, messages);
+  }
 };
 
 export const forkSession = async (
@@ -215,60 +255,72 @@ export const forkSession = async (
 
     return newId;
   }
-  return runWithDbFallback(async () => {
-    // 1. Get original session to get user ID
-    const sessionDoc = await getDoc(doc(db, "sessions", originalSessionId));
-    if (!sessionDoc.exists()) throw new Error("Session not found");
+  try {
+    return await runWithDbFallback(async () => {
+      // 1. Get original session to get user ID
+      const sessionDoc = await getDoc(doc(db, "sessions", originalSessionId));
+      if (!sessionDoc.exists()) throw new Error("Session not found");
 
-    const oldSessionData = sessionDoc.data() as ChatSession;
+      const oldSessionData = sessionDoc.data() as ChatSession;
 
-    // 2. Create new session
-    const newSessionRef = await addDoc(collection(db, "sessions"), {
-      ...oldSessionData,
-      title: `${oldSessionData.title} (Forked)`,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    });
+      // 2. Create new session
+      const newSessionRef = await addDoc(collection(db, "sessions"), {
+        ...oldSessionData,
+        title: `${oldSessionData.title} (Forked)`,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      });
 
-    // 3. Copy messages up to the point
-    const messagesMsgQ = query(
-      collection(db, `sessions/${originalSessionId}/messages`),
-      where("timestamp", "<=", upToMessageTimestamp),
-      orderBy("timestamp", "asc"),
-    );
-    const msgSnap = await getDocs(messagesMsgQ);
-
-    for (const messageDoc of msgSnap.docs) {
-      await addDoc(
-        collection(db, `sessions/${newSessionRef.id}/messages`),
-        messageDoc.data(),
+      // 3. Copy messages up to the point
+      const messagesMsgQ = query(
+        collection(db, `sessions/${originalSessionId}/messages`),
+        where("timestamp", "<=", upToMessageTimestamp),
+        orderBy("timestamp", "asc"),
       );
-    }
+      const msgSnap = await getDocs(messagesMsgQ);
 
-    return newSessionRef.id;
-  });
+      for (const messageDoc of msgSnap.docs) {
+        await addDoc(
+          collection(db, `sessions/${newSessionRef.id}/messages`),
+          messageDoc.data(),
+        );
+      }
+
+      return newSessionRef.id;
+    });
+  } catch (error) {
+    console.error("Firestore forkSession error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return forkSession(originalSessionId, upToMessageTimestamp, currentModel);
+  }
 };
 
 export const getMessages = async (sessionId: string): Promise<Message[]> => {
-  if (isGuestSessionActive()) {
+  if (isGuestSessionActive() || sessionId.startsWith("fallback_") || sessionId.startsWith("guest_")) {
     const data = localStorage.getItem("nim_guest_messages_" + sessionId);
     return data ? JSON.parse(data) : [];
   }
-  return runWithDbFallback(async () => {
-    const q = query(
-      collection(db, `sessions/${sessionId}/messages`),
-      orderBy("timestamp", "asc"),
-    );
+  try {
+    return await runWithDbFallback(async () => {
+      const q = query(
+        collection(db, `sessions/${sessionId}/messages`),
+        orderBy("timestamp", "asc"),
+      );
 
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(
-      (doc) =>
-        ({
-          id: doc.id,
-          ...doc.data(),
-        }) as Message,
-    );
-  });
+      const querySnapshot = await getDocs(q);
+      return querySnapshot.docs.map(
+        (doc) =>
+          ({
+            id: doc.id,
+            ...doc.data(),
+          }) as Message,
+      );
+    });
+  } catch (error) {
+    console.error("Firestore getMessages error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return getMessages(sessionId);
+  }
 };
 
 export const addMessage = async (
@@ -278,7 +330,7 @@ export const addMessage = async (
   attachments?: Attachment[],
   model?: string
 ): Promise<Message> => {
-  if (isGuestSessionActive()) {
+  if (isGuestSessionActive() || sessionId.startsWith("fallback_") || sessionId.startsWith("guest_")) {
     const messages = await getMessages(sessionId);
     const newMsg: Message = {
       id: "guest_msg_" + Math.random().toString(36).substring(7),
@@ -308,35 +360,41 @@ export const addMessage = async (
     }
     return newMsg;
   }
-  return runWithDbFallback(async () => {
-    const messageData: any = {
-      role,
-      content,
-      timestamp: Date.now(),
-    };
-    if (attachments && attachments.length > 0) {
-      messageData.attachments = attachments;
-    }
-    if (model) {
-      messageData.model = model;
-    }
+  try {
+    return await runWithDbFallback(async () => {
+      const messageData: any = {
+        role,
+        content,
+        timestamp: Date.now(),
+      };
+      if (attachments && attachments.length > 0) {
+        messageData.attachments = attachments;
+      }
+      if (model) {
+        messageData.model = model;
+      }
 
-    const messageRef = await addDoc(
-      collection(db, `sessions/${sessionId}/messages`),
-      messageData,
-    );
+      const messageRef = await addDoc(
+        collection(db, `sessions/${sessionId}/messages`),
+        messageData,
+      );
 
-    // Update session updatedAt
-    const updateData: any = { updatedAt: Date.now() };
-    if (role === "user" && content.length > 0) {
-      updateData.title = content.substring(0, 30) + "...";
-    }
+      // Update session updatedAt
+      const updateData: any = { updatedAt: Date.now() };
+      if (role === "user" && content.length > 0) {
+        updateData.title = content.substring(0, 30) + "...";
+      }
 
-    await updateDoc(doc(db, "sessions", sessionId), updateData);
+      await updateDoc(doc(db, "sessions", sessionId), updateData);
 
-    return {
-      id: messageRef.id,
-      ...messageData,
-    } as Message;
-  });
+      return {
+        id: messageRef.id,
+        ...messageData,
+      } as Message;
+    });
+  } catch (error) {
+    console.error("Firestore addMessage error, falling back to local storage:", error);
+    setLocalFallbackActive(true);
+    return addMessage(sessionId, role, content, attachments, model);
+  }
 };

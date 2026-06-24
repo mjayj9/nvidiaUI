@@ -237,6 +237,13 @@ export default function Dashboard({ user }: DashboardProps) {
         activeTab={activeTab}
         onSelectTab={(tab) => {
           setActiveTab(tab);
+          if (tab === "chat" && !activeSessionId) {
+            if (sessions.length > 0) {
+              setActiveSessionId(sessions[0].id);
+            } else {
+              handleNewChat();
+            }
+          }
           if (window.innerWidth < 768 && tab !== "chat") {
             setIsSidebarOpen(false);
           }
