@@ -99,6 +99,7 @@ export const chatWithNvidiaObject = async (
     const reader = res.body.getReader();
     const decoder = new TextDecoder("utf-8");
     let done = false;
+    let inThinkingMode = false;
 
     while (!done) {
       const { value, done: readerDone } = await reader.read();
@@ -115,11 +116,26 @@ export const chatWithNvidiaObject = async (
           if (line.startsWith("data: ")) {
             try {
               const data = JSON.parse(line.substring(6));
-              const content = data.choices?.[0]?.delta?.content || "";
-              if (content) {
-                estimatedTokens += Math.max(1, Math.ceil(content.length / 4));
+              const delta = data.choices?.[0]?.delta;
+              const content = delta?.content || "";
+              const reasoning = delta?.reasoning_content || "";
+
+              if (reasoning) {
+                if (!inThinkingMode) {
+                  onUpdate("<think>\n");
+                  inThinkingMode = true;
+                }
+                onUpdate(reasoning);
+                estimatedTokens += Math.max(1, Math.ceil(reasoning.length / 4));
+              } else if (content) {
+                if (inThinkingMode) {
+                  onUpdate("\n</think>\n\n");
+                  inThinkingMode = false;
+                }
                 onUpdate(content);
+                estimatedTokens += Math.max(1, Math.ceil(content.length / 4));
               }
+
               if (data.usage?.completion_tokens) {
                 usageTokens = data.usage.completion_tokens;
               }
@@ -129,6 +145,10 @@ export const chatWithNvidiaObject = async (
           }
         }
       }
+    }
+
+    if (inThinkingMode) {
+      onUpdate("\n</think>\n\n");
     }
     
     if (options?.onMetrics) {

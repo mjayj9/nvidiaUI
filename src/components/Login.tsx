@@ -1,5 +1,5 @@
 import { signInWithGoogle } from "../lib/firebase";
-import { Cpu, LogIn } from "lucide-react";
+import { Cpu, LogIn, Settings, X, RotateCcw } from "lucide-react";
 import { useState } from "react";
 
 interface LoginProps {
@@ -8,6 +8,12 @@ interface LoginProps {
 
 export default function Login({ onGuestLogin }: LoginProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showConfig, setShowConfig] = useState(false);
+  const [configText, setConfigText] = useState(() => {
+    const saved = localStorage.getItem("nim_custom_firebase_config");
+    if (saved) return JSON.stringify(JSON.parse(saved), null, 2);
+    return "";
+  });
 
   const handleLogin = async () => {
     setIsLoading(true);
@@ -23,6 +29,11 @@ export default function Login({ onGuestLogin }: LoginProps) {
 1. Firebase 콘솔에 로그인합니다.
 2. Authentication -> Settings -> Authorized Domains로 이동합니다.
 3. '도메인 추가' 버튼을 눌러 '${window.location.hostname}'을 추가해 주세요.`;
+      } else if (e.code === "auth/invalid-api-key" || e.code === "auth/configuration-not-found") {
+        errorMsg = `구글 로그인 구성 오류가 발생했습니다.
+
+[원인]
+현재 프로젝트 구성에 등록된 API 키가 유효하지 않거나 활성화되지 않았습니다. 우측 상단의 톱니바퀴 아이콘을 클릭하여 올바른 Firebase SDK 구성을 설정했는지 확인해 주세요.`;
       }
       alert(errorMsg);
     } finally {
@@ -30,12 +41,67 @@ export default function Login({ onGuestLogin }: LoginProps) {
     }
   };
 
+  const handleSaveConfig = () => {
+    try {
+      let cleanText = configText.trim();
+      if (!cleanText) {
+        alert("구성 텍스트를 입력해 주세요.");
+        return;
+      }
+
+      // JavaScript 객체 선언문에서 중괄호 안쪽만 추출
+      if (cleanText.includes("{")) {
+        const start = cleanText.indexOf("{");
+        const end = cleanText.lastIndexOf("}");
+        if (end > start) {
+          cleanText = cleanText.substring(start, end + 1);
+        }
+      }
+
+      // JS 객체 키와 값을 유효한 JSON 형식으로 포맷팅
+      cleanText = cleanText
+        .replace(/([a-zA-Z0-9_]+)\s*:/g, '"$1":') // 키값 따옴표 래핑
+        .replace(/'([^']*)'/g, '"$1"') // 싱글쿼트를 더블쿼트로 교체
+        .replace(/,\s*([}\]])/g, "$1"); // 맨 뒤 콤마 제거
+
+      const parsedConfig = JSON.parse(cleanText);
+
+      // 필수 키값 검증
+      if (!parsedConfig.apiKey || !parsedConfig.projectId || !parsedConfig.appId) {
+        alert("유효한 Firebase 구성 정보가 아닙니다. apiKey, projectId, appId는 필수 항목입니다.");
+        return;
+      }
+
+      localStorage.setItem("nim_custom_firebase_config", JSON.stringify(parsedConfig));
+      alert("Firebase 프로젝트 구성이 저장되었습니다. 페이지가 새로고침됩니다.");
+      window.location.reload();
+    } catch (err: any) {
+      alert("구성을 파싱하는 중 오류가 발생했습니다. 올바른 JSON 또는 Firebase SDK config 객체 형태인지 확인해 주세요: " + err.message);
+    }
+  };
+
+  const handleResetConfig = () => {
+    if (window.confirm("Firebase 프로젝트 구성을 기본값(focused-rig-vcf5x)으로 초기화하시겠습니까?")) {
+      localStorage.removeItem("nim_custom_firebase_config");
+      window.location.reload();
+    }
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-950 text-neutral-50 px-4">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-neutral-950 text-neutral-50 px-4 relative">
       {/* Background neon ambient light */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[#76b900]/10 rounded-full filter blur-[100px] pointer-events-none"></div>
 
       <div className="max-w-md w-full space-y-8 p-10 bg-neutral-900/90 rounded-2xl border border-neutral-800 shadow-2xl relative z-10 backdrop-blur-md nvidia-glow">
+        {/* Settings button */}
+        <button
+          onClick={() => setShowConfig(true)}
+          className="absolute top-4 right-4 p-2 rounded-xl bg-neutral-950 border border-neutral-850 text-neutral-500 hover:text-white hover:border-neutral-750 hover:bg-neutral-900 transition duration-300 cursor-pointer"
+          title="Firebase 프로젝트 설정"
+        >
+          <Settings className="w-4 h-4" />
+        </button>
+
         <div className="text-center">
           <div className="mx-auto w-16 h-16 bg-[#76b900]/10 text-[#76b900] flex items-center justify-center rounded-2xl mb-6 border border-[#76b900]/20 animate-pulse">
             <Cpu className="w-8 h-8 drop-shadow-[0_0_8px_rgba(118,185,0,0.5)]" />
@@ -83,10 +149,79 @@ export default function Login({ onGuestLogin }: LoginProps) {
 
         <div className="text-center mt-6">
           <p className="text-[10px] text-neutral-500 max-w-xs mx-auto leading-relaxed">
-            Google Auth requires active OAuth authorization. Choose Developer Bypass to run the workspace client locally without external accounts.
+            Google Auth requires active OAuth authorization. Choose Developer Bypass or configure your own Firebase project above.
           </p>
         </div>
       </div>
+
+      {/* Firebase Config Modal Overlay */}
+      {showConfig && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="max-w-md w-full bg-neutral-900 border border-neutral-850 rounded-2xl overflow-hidden shadow-2xl flex flex-col relative z-20">
+            <div className="flex justify-between items-center p-5 border-b border-neutral-800">
+              <div className="flex items-center gap-2">
+                <Settings className="w-4 h-4 text-[#76b900]" />
+                <span className="text-sm font-bold text-white">Firebase Project Settings</span>
+              </div>
+              <button
+                onClick={() => setShowConfig(false)}
+                className="text-neutral-500 hover:text-white p-1 hover:bg-neutral-800 rounded transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="p-5 space-y-4 text-left">
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                구글 로그인을 활성화하려면 Firebase 콘솔에서 발급받은 웹 앱 SDK 구성 객체(JavaScript)를 아래에 붙여넣어 주세요.
+              </p>
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">SDK Configuration Object</label>
+                <textarea
+                  value={configText}
+                  onChange={(e) => setConfigText(e.target.value)}
+                  placeholder={`const firebaseConfig = {
+  apiKey: "AIzaSy...",
+  authDomain: "nvidiaui-5c838.firebaseapp.com",
+  projectId: "nvidiaui-5c838",
+  storageBucket: "nvidiaui-5c838.firebasestorage.app",
+  messagingSenderId: "...",
+  appId: "..."
+};`}
+                  className="w-full bg-[#0d0d0d] border border-neutral-800 rounded-xl p-3 text-xs font-mono text-neutral-300 placeholder-neutral-700 focus:border-[#76b900] focus:outline-none resize-none min-h-[180px] transition-all"
+                  rows={8}
+                />
+              </div>
+              
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  onClick={handleResetConfig}
+                  className="flex items-center gap-1 text-[10px] font-bold text-red-400 hover:text-red-300 transition duration-300 cursor-pointer bg-transparent border-none"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  기본값으로 초기화
+                </button>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowConfig(false)}
+                    className="px-4 py-2 bg-neutral-950 border border-neutral-850 hover:bg-neutral-900 text-neutral-400 hover:text-white rounded-lg text-xs font-semibold transition cursor-pointer"
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={handleSaveConfig}
+                    className="px-4 py-2 bg-[#76b900] hover:bg-[#66a000] text-black rounded-lg text-xs font-bold transition duration-300 shadow-[0_4px_10px_rgba(118,185,0,0.15)] cursor-pointer"
+                  >
+                    설정 저장
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
