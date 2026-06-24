@@ -1,0 +1,163 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+body {
+  font-family: 'Outfit', sans-serif;
+  background-color: #030303;
+}
+
+code, pre {
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@layer utilities {
+  .scrollbar-thin {
+    scrollbar-width: thin;
+  }
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(118, 185, 0, 0.1);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(118, 185, 0, 0.3);
+}
+
+/* NVIDIA Design System */
+.nvidia-glass {
+  background: rgba(13, 13, 13, 0.65);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(118, 185, 0, 0.15);
+}
+
+.nvidia-glow {
+  box-shadow: 0 0 25px rgba(118, 185, 0, 0.1);
+}
+
+.nvidia-glow-strong {
+  box-shadow: 0 0 35px rgba(118, 185, 0, 0.25);
+}
+
+.nvidia-glow-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nvidia-glow-hover:hover {
+  box-shadow: 0 0 30px rgba(118, 185, 0, 0.18);
+  border-color: rgba(118, 185, 0, 0.45);
+  transform: translateY(-2px);
+}
+
+.nvidia-neon-border {
+  border-color: rgba(118, 185, 0, 0.35);
+}
+
+/* Custom Markdown styling for responses */
+.markdown-body {
+  color: #d4d4d4;
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  color: #ffffff;
+  font-weight: 700;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.markdown-body h1 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid rgba(118, 185, 0, 0.2);
+  padding-bottom: 0.5rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.25rem;
+}
+
+.markdown-body h3 {
+  font-size: 1.1rem;
+}
+
+.markdown-body p {
+  margin-bottom: 1rem;
+}
+
+.markdown-body strong {
+  color: #76b900;
+  font-weight: 600;
+}
+
+.markdown-body ul, .markdown-body ol {
+  margin-left: 1.5rem;
+  margin-bottom: 1rem;
+  list-style-type: disc;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-body a {
+  color: #76b900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: opacity 0.2s;
+}
+
+.markdown-body a:hover {
+  opacity: 0.8;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid #76b900;
+  padding-left: 1rem;
+  color: #a3a3a3;
+  font-style: italic;
+  margin: 1rem 0;
+  background: rgba(118, 185, 0, 0.03);
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0 8px 8px 0;
+}
+
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.875rem;
+}
+
+.markdown-body th {
+  background: rgba(118, 185, 0, 0.1);
+  color: #ffffff;
+  font-weight: 600;
+  border: 1px solid rgba(118, 185, 0, 0.2);
+  padding: 0.75rem;
+}
+
+.markdown-body td {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 0.75rem;
+}
+
+.markdown-body tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+
+

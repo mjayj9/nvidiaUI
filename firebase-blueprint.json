@@ -1,0 +1,15 @@
+{
+  "collections": [
+    {
+      "name": "chat_history",
+      "rules": ["read", "write", "delete"],
+      "schema": {
+        "userId": "string",
+        "title": "string",
+        "modelsUsed": "array",
+        "messages": "array",
+        "createdAt": "number"
+      }
+    }
+  ]
+}

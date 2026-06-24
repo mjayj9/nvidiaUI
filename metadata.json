@@ -1,0 +1,6 @@
+{
+  "name": "NVIDIA NIM UI",
+  "description": "A chat interface for NVIDIA NIM models with Firebase authentication and Firestore conversation history.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
