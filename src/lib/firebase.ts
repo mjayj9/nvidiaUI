@@ -55,6 +55,9 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, provider);
     return result.user;
   } catch (error: any) {
+    if (error.code === "auth/unauthorized-domain") {
+      throw error;
+    }
     console.warn("signInWithPopup failed, attempting signInWithRedirect", error);
     try {
       await signInWithRedirect(auth, provider);
@@ -66,7 +69,12 @@ export const signInWithGoogle = async () => {
 };
 
 export const signOut = async () => {
-  localStorage.removeItem("nim_guest_user");
-  await firebaseSignOut(auth);
-  window.location.reload();
+  try {
+    localStorage.removeItem("nim_guest_user");
+    await firebaseSignOut(auth);
+  } catch (error) {
+    console.error("Firebase signOut error:", error);
+  } finally {
+    window.location.reload();
+  }
 };

@@ -37,6 +37,16 @@ export const uploadFile = async (
   userId: string,
   file: File,
 ): Promise<string> => {
+  if (isGuestUser(userId) || isGuestSessionActive()) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result as string);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
   const fileRef = ref(
     storage,
     `users/${userId}/uploads/${Date.now()}_${file.name}`,

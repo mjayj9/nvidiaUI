@@ -4,7 +4,8 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import { createRequire } from "module";
 // @ts-ignore
-const pdf = createRequire(import.meta.url)("pdf-parse");
+const requireFunc = typeof require !== "undefined" ? require : createRequire(import.meta.url);
+const pdf = requireFunc("pdf-parse");
 
 async function startServer() {
   const app = express();

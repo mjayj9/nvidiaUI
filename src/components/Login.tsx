@@ -13,9 +13,18 @@ export default function Login({ onGuestLogin }: LoginProps) {
     setIsLoading(true);
     try {
       await signInWithGoogle();
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      alert("구글 로그인 진행 중 오류가 발생했습니다. 아래의 'Developer Bypass (Guest)' 버튼을 클릭하여 로그인해 주세요.");
+      let errorMsg = "구글 로그인 진행 중 오류가 발생했습니다. 아래의 'Developer Bypass (Guest)' 버튼을 클릭하여 로그인해 주세요.";
+      if (e.code === "auth/unauthorized-domain") {
+        errorMsg = `현재 접속 중인 도메인(${window.location.hostname})이 Firebase Authentication의 승인된 도메인(Authorized Domains)에 등록되지 않았습니다.
+
+[해결 방법]
+1. Firebase 콘솔에 로그인합니다.
+2. Authentication -> Settings -> Authorized Domains로 이동합니다.
+3. '도메인 추가' 버튼을 눌러 '${window.location.hostname}'을 추가해 주세요.`;
+      }
+      alert(errorMsg);
     } finally {
       setIsLoading(false);
     }

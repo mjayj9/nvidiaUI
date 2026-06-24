@@ -23,8 +23,17 @@ export default function App() {
           setUser(result.user);
         }
       })
-      .catch((error) => {
+      .catch((error: any) => {
         console.error("Redirect login error:", error);
+        if (error.code === "auth/unauthorized-domain") {
+          const errorMsg = `현재 접속 중인 도메인(${window.location.hostname})이 Firebase Authentication의 승인된 도메인(Authorized Domains)에 등록되지 않았습니다.
+
+[해결 방법]
+1. Firebase 콘솔에 로그인합니다.
+2. Authentication -> Settings -> Authorized Domains로 이동합니다.
+3. '도메인 추가' 버튼을 눌러 '${window.location.hostname}'을 추가해 주세요.`;
+          alert(errorMsg);
+        }
       });
 
     const savedGuest = localStorage.getItem("nim_guest_user");
