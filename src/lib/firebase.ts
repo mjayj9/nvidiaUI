@@ -9,15 +9,15 @@ import {
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
-// 기본 Firebase 구성 값 (Focused-Rig 프로젝트)
+// 기본 Firebase 구성 값 (nvidiaui-5c838 프로젝트)
 const defaultFirebaseConfig = {
-  projectId: "focused-rig-vcf5x",
-  appId: "1:595387634191:web:fe3cf3dd9312147f81c97a",
-  apiKey: "AIzaSyBbuN7CBGCX_dzxAmM1fhj8GDNeAFZv_tI",
-  authDomain: "focused-rig-vcf5x.firebaseapp.com",
-  storageBucket: "focused-rig-vcf5x.firebasestorage.app",
-  messagingSenderId: "595387634191",
-  measurementId: "",
+  projectId: "nvidiaui-5c838",
+  appId: "1:435597854926:web:561791d613ace9ecdbe89f",
+  apiKey: "AIzaSyCFBLOf3EfR-_QcQCOvSFOH8TpfdndAEk0",
+  authDomain: "nvidiaui-5c838.firebaseapp.com",
+  storageBucket: "nvidiaui-5c838.firebasestorage.app",
+  messagingSenderId: "435597854926",
+  measurementId: "G-G8L7PP2VCW",
 };
 
 let firebaseConfig = defaultFirebaseConfig;
@@ -44,7 +44,7 @@ let defaultDb: Firestore;
 let isUsingDefault = false;
 
 try {
-  if (isCustomConfigUsed) {
+  if (isCustomConfigUsed || firebaseConfig.projectId !== "focused-rig-vcf5x") {
     // 사용자 지정 파이어베이스 프로젝트에서는 네임드 데이터베이스(ai-studio-...)가 없으므로 (default) 데이터베이스를 바로 사용합니다.
     customDb = getFirestore(app);
     defaultDb = customDb;
