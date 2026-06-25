@@ -101,7 +101,11 @@ export default function SettingsPanel({
     } catch (e: any) {
       console.error(e);
       setTestStatus("failed");
-      setTestMessage(e.message);
+      if (e.message && (e.message.includes("Failed to fetch") || e.message.includes("fetch"))) {
+        setTestMessage("Failed to fetch. 렌더(Render)에서 'Static Site'가 아닌 'Web Service'로 배포하셔야 백엔드 프록시가 작동하여 CORS 오류 없이 작동합니다.");
+      } else {
+        setTestMessage(e.message);
+      }
     }
   };
 
