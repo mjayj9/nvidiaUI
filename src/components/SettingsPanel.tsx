@@ -45,9 +45,9 @@ export default function SettingsPanel({
   });
 
   const saveApiSettings = () => {
-    onUpdateApiKey(apiKey);
     localStorage.setItem("ngc_api_key", ngcKey);
     localStorage.setItem("self_hosted_nim_base_url", selfHostedBase);
+    onUpdateApiKey(apiKey);
 
     // Show saved notification toast
     const toast = document.createElement("div");

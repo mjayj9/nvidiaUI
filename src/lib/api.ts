@@ -9,6 +9,7 @@ import {
   updateDoc,
   deleteDoc,
   getDoc,
+  setDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage, switchToDefaultDatabase } from "./firebase";
@@ -428,5 +429,43 @@ export const addMessage = async (
     console.error("Firestore addMessage error, falling back to local storage:", error);
     setLocalFallbackActive(true);
     return addMessage(sessionId, role, content, attachments, model);
+  }
+};
+
+export interface UserSettings {
+  apiKey?: string;
+  ngcKey?: string;
+  selfHostedBase?: string;
+  selectedModel?: string;
+}
+
+export const getUserSettings = async (userId: string): Promise<UserSettings | null> => {
+  if (isGuestUser(userId) || isGuestSessionActive()) {
+    return null;
+  }
+  try {
+    return await runWithDbFallback(async () => {
+      const userDoc = await getDoc(doc(db, "users", userId));
+      if (userDoc.exists()) {
+        return userDoc.data() as UserSettings;
+      }
+      return null;
+    }, "Get User Settings");
+  } catch (error) {
+    console.error("Firestore getUserSettings error:", error);
+    return null;
+  }
+};
+
+export const saveUserSettings = async (userId: string, settings: UserSettings): Promise<void> => {
+  if (isGuestUser(userId) || isGuestSessionActive()) {
+    return;
+  }
+  try {
+    await runWithDbFallback(async () => {
+      await setDoc(doc(db, "users", userId), settings, { merge: true });
+    }, "Save User Settings");
+  } catch (error) {
+    console.error("Firestore saveUserSettings error:", error);
   }
 };

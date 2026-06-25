@@ -18,6 +18,8 @@ import {
   createChatSession,
   deleteChatSession,
   forkSession,
+  getUserSettings,
+  saveUserSettings,
 } from "../lib/api";
 import { Loader2, Menu } from "lucide-react";
 import { modelRegistry } from "../lib/modelRegistry";
@@ -62,8 +64,35 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   };
 
+  const loadSettingsAndSessions = async () => {
+    if (user.uid !== "nvidia-guest-dev") {
+      try {
+        const settings = await getUserSettings(user.uid);
+        if (settings) {
+          if (settings.apiKey) {
+            localStorage.setItem("nim_api_key", settings.apiKey);
+            setApiKey(settings.apiKey);
+          }
+          if (settings.ngcKey) {
+            localStorage.setItem("ngc_api_key", settings.ngcKey);
+          }
+          if (settings.selfHostedBase) {
+            localStorage.setItem("self_hosted_nim_base_url", settings.selfHostedBase);
+          }
+          if (settings.selectedModel) {
+            localStorage.setItem("nim_model", settings.selectedModel);
+            setModel(settings.selectedModel);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user settings", error);
+      }
+    }
+    await loadSessions();
+  };
+
   useEffect(() => {
-    loadSessions();
+    loadSettingsAndSessions();
   }, [user.uid]);
 
   const handleNewChat = async () => {
@@ -102,14 +131,31 @@ export default function Dashboard({ user }: DashboardProps) {
     }
   };
 
+  const syncSettingsToFirestore = (updatedKey?: string, updatedModel?: string) => {
+    if (user.uid === "nvidia-guest-dev") return;
+    const finalKey = updatedKey !== undefined ? updatedKey : apiKey;
+    const finalModel = updatedModel !== undefined ? updatedModel : model;
+    const ngcKey = localStorage.getItem("ngc_api_key") || "";
+    const selfHostedBase = localStorage.getItem("self_hosted_nim_base_url") || "";
+    
+    saveUserSettings(user.uid, {
+      apiKey: finalKey,
+      ngcKey,
+      selfHostedBase,
+      selectedModel: finalModel,
+    }).catch(err => console.error("Failed to sync settings to Firestore", err));
+  };
+
   const updateApiKey = (key: string) => {
     localStorage.setItem("nim_api_key", key);
     setApiKey(key);
+    syncSettingsToFirestore(key, model);
   };
 
   const updateModel = (m: string) => {
     localStorage.setItem("nim_model", m);
     setModel(m);
+    syncSettingsToFirestore(apiKey, m);
   };
 
   const handleForkSession = async (messageTimestamp: number) => {
