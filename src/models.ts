@@ -5,7 +5,8 @@ export const NIM_MODELS = modelRegistry.map(m => ({
   name: m.fullName || m.displayName || m.id,
   brand: m.provider,
   type: m.capabilities.includes("specialized") ? "SPECIAL" : m.capabilities.includes("vision") ? "VISION" : "TEXT",
-  hasThinking: m.capabilities.includes("reasoning")
+  hasThinking: m.capabilities.includes("reasoning"),
+  capabilities: m.capabilities
 }));
 
 export function getModelType(modelId: string): "TEXT" | "VISION" | "SPECIAL" {

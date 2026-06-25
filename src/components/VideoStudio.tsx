@@ -17,7 +17,7 @@ export default function VideoStudio({ apiKey }: VideoStudioProps) {
 
   // Video Understanding State
   const [prompt, setPrompt] = useState("");
-  const [activeModel, setActiveModel] = useState("cosmos3-nano-reasoner");
+  const [activeModel, setActiveModel] = useState("nvidia/cosmos3-nano-reasoner");
   const [undIsLoading, setUndIsLoading] = useState(false);
   const [undResult, setUndResult] = useState("");
   const videoModels = modelRegistry.filter((m) => m.capabilities.includes("video-understanding"));

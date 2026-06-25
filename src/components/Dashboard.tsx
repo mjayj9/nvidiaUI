@@ -38,14 +38,14 @@ export default function Dashboard({ user }: DashboardProps) {
   );
   const [model, setModel] = useState(() => {
     const saved = localStorage.getItem("nim_model");
-    if (saved === "meta/llama3-70b-instruct")
+    if (saved === "meta/llama3-70b-instruct" || saved === "llama-3.1-70b-instruct")
       return "meta/llama-3.1-70b-instruct";
 
     if (saved && !modelRegistry.some((m) => m.id === saved)) {
-      return "llama-3.1-70b-instruct";
+      return "meta/llama-3.1-70b-instruct";
     }
 
-    return saved || "llama-3.1-70b-instruct";
+    return saved || "meta/llama-3.1-70b-instruct";
   });
 
   const loadSessions = async () => {
@@ -129,7 +129,7 @@ export default function Dashboard({ user }: DashboardProps) {
 
   const getSessionModel = (sessionId: string) => {
     let sessionModel = sessions.find((s) => s.id === sessionId)?.model || model;
-    if (sessionModel === "meta/llama3-70b-instruct") {
+    if (sessionModel === "meta/llama3-70b-instruct" || sessionModel === "llama-3.1-70b-instruct") {
       sessionModel = "meta/llama-3.1-70b-instruct";
     }
     return sessionModel;

@@ -23,20 +23,44 @@ export const setLocalFallbackActive = (active: boolean) => {
   }
 };
 
-const runWithDbFallback = async <T>(fn: () => Promise<T>): Promise<T> => {
+const promiseTimeout = <T>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> => {
+  return new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error("Timeout: " + errorMsg));
+    }, ms);
+    promise.then(
+      (res) => {
+        clearTimeout(timer);
+        resolve(res);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      }
+    );
+  });
+};
+
+const runWithDbFallback = async <T>(fn: () => Promise<T>, description = "Database request"): Promise<T> => {
   try {
-    return await fn();
+    return await promiseTimeout(fn(), 4000, description);
   } catch (error: any) {
     const errorStr = String(error.message || error);
     if (
+      errorStr.includes("Timeout") ||
       error.code === "not-found" ||
       errorStr.includes("not exist") ||
       errorStr.includes("database") ||
       errorStr.includes("not-found")
     ) {
-      console.warn("Firestore database not found, falling back to default database...", error);
+      console.warn(`Firestore database failed or timed out (${description}), switching database or falling back...`, error);
       switchToDefaultDatabase();
-      return await fn();
+      try {
+        return await promiseTimeout(fn(), 4000, description + " (fallback)");
+      } catch (fallbackError) {
+        console.error(`Fallback database also failed/timed out (${description}):`, fallbackError);
+        throw fallbackError;
+      }
     }
     throw error;
   }

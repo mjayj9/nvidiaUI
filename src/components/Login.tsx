@@ -34,6 +34,13 @@ export default function Login({ onGuestLogin }: LoginProps) {
 
 [원인]
 현재 프로젝트 구성에 등록된 API 키가 유효하지 않거나 활성화되지 않았습니다. 우측 상단의 톱니바퀴 아이콘을 클릭하여 올바른 Firebase SDK 구성을 설정했는지 확인해 주세요.`;
+      } else if (e.code === "auth/operation-not-allowed") {
+        errorMsg = `구글 로그인 제공업체(Sign-in provider)가 Firebase 콘솔에서 활성화되지 않았습니다.
+        
+[해결 방법]
+1. Firebase 콘솔(https://console.firebase.google.com/)에 로그인합니다.
+2. Build -> Authentication -> Sign-in method 탭으로 이동합니다.
+3. 구글(Google) 로그인 제공업체를 찾아 활성화(Enable)로 설정해 주세요.`;
       }
       alert(errorMsg);
     } finally {

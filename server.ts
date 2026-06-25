@@ -281,7 +281,9 @@ async function startServer() {
 
       let extractedText = "";
       if (fileType === "application/pdf" || fileName.endsWith(".pdf")) {
-        const parsed = await pdf(buffer);
+        const uint8 = new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+        const parser = new pdf.PDFParse(uint8);
+        const parsed = await parser.getText();
         extractedText = parsed.text;
       } else {
         extractedText = buffer.toString("utf8");

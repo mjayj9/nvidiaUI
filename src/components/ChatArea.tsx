@@ -190,10 +190,14 @@ export default function ChatArea({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const chatCapableModels = NIM_MODELS.filter(m => 
+    m.capabilities.includes("chat") || m.capabilities.includes("reasoning")
+  );
+
   const currentSession = sessions.find((s) => s.id === sessionId);
   let activeModel = localModel || currentSession?.model || model;
-  if (!NIM_MODELS.some((m) => m.id === activeModel)) {
-    activeModel = NIM_MODELS[0].id; // Fallback to first model
+  if (!chatCapableModels.some((m) => m.id === activeModel)) {
+    activeModel = chatCapableModels[0]?.id || NIM_MODELS[0].id; // Fallback to first model
   }
   
   const modelType = getModelType(activeModel);
@@ -519,9 +523,9 @@ export default function ChatArea({
               }}
               className="text-sm font-medium text-white bg-transparent outline-none cursor-pointer hover:text-[#76b900] transition"
             >
-              {Array.from(new Set(NIM_MODELS.map(m => m.brand))).map(brand => (
+              {Array.from(new Set(chatCapableModels.map(m => m.brand))).map(brand => (
                 <optgroup key={brand} label={brand} className="bg-neutral-900 text-white">
-                  {NIM_MODELS.filter(m => m.brand === brand).map(m => (
+                  {chatCapableModels.filter(m => m.brand === brand).map(m => (
                     <option key={m.id} value={m.id}>
                       {m.name}
                     </option>

@@ -16,7 +16,7 @@ interface ImageFile {
 export default function VisionAnalyzer({ apiKey }: VisionAnalyzerProps) {
   const [images, setImages] = useState<ImageFile[]>([]);
   const [prompt, setPrompt] = useState("");
-  const [activeModel, setActiveModel] = useState("qwen3.5-397b-a17b");
+  const [activeModel, setActiveModel] = useState("qwen/qwen3.5-397b-a17b");
   const [analysisType, setAnalysisType] = useState("description");
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState("");

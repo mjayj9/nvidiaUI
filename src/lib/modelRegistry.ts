@@ -87,7 +87,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "description": "SDXL is a latent diffusion model for text-to-image synthesis."
   },
   {
-    "id": "minimax-m3",
+    "id": "minimaxai/minimax-m3",
     "displayName": "Minimaxai",
     "provider": "minimaxai",
     "capabilities": [
@@ -111,10 +111,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "MiniMax M3 Preview is a multimodal MoE vision-language model with strong reasoning, coding, and tool-calling capabilities.",
-    "fullName": "Minimax M3"
+    "fullName": "MiniMax M3 Preview"
   },
   {
-    "id": "diffusiongemma-26b-a4b-it",
+    "id": "google/diffusiongemma-26b-a4b-it",
     "displayName": "Google",
     "provider": "google",
     "capabilities": [
@@ -136,10 +136,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Diffusion-based 26B parameter LLM enabling parallel token generation for real-time text apps",
-    "fullName": "Diffusiongemma 26B A4b It"
+    "fullName": "DiffusionGemma 26B A4B IT"
   },
   {
-    "id": "nemotron-3-ultra-550b-a55b",
+    "id": "nvidia/nemotron-3-ultra-550b-a55b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -163,10 +163,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Open, efficient hybrid Mamba-Transformer MoE with 1M context, excelling in agentic reasoning, coding, planning, tool calling, and more",
-    "fullName": "Nemotron 3 Ultra 550B A55b"
+    "fullName": "Nemotron 3 Ultra 550B A55B"
   },
   {
-    "id": "nemotron-3.5-content-safety",
+    "id": "nvidia/nemotron-3.5-content-safety",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -191,7 +191,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Nemotron 3.5 Content Safety"
   },
   {
-    "id": "cosmos3-nano",
+    "id": "nvidia/cosmos3-nano",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -215,7 +215,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Cosmos3 Nano"
   },
   {
-    "id": "cosmos3-nano-reasoner",
+    "id": "nvidia/cosmos3-nano-reasoner",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -241,7 +241,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Cosmos3 Nano Reasoner"
   },
   {
-    "id": "step-3.7-flash",
+    "id": "stepfun-ai/step-3.7-flash",
     "displayName": "Stepfun-ai",
     "provider": "stepfun-ai",
     "capabilities": [
@@ -269,7 +269,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Step 3.7 Flash"
   },
   {
-    "id": "kimi-k2.6",
+    "id": "moonshotai/kimi-k2.6",
     "displayName": "Moonshotai",
     "provider": "moonshotai",
     "capabilities": [
@@ -298,7 +298,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Kimi K2.6"
   },
   {
-    "id": "mistral-medium-3.5-128b",
+    "id": "mistralai/mistral-medium-3.5-128b",
     "displayName": "Mistral AI",
     "provider": "mistralai",
     "capabilities": [
@@ -324,7 +324,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Mistral Medium 3.5 128B"
   },
   {
-    "id": "nemotron-3-nano-omni-30b-a3b-reasoning",
+    "id": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -351,10 +351,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Nemotron 3 Nano Omni is an omni-modal reasoning model that understands images, video, speech, text.",
-    "fullName": "Nemotron 3 Nano Omni 30B A3b Reasoning"
+    "fullName": "Nemotron 3 Nano Omni 30B A3B Reasoning"
   },
   {
-    "id": "deepseek-v4-flash",
+    "id": "deepseek-ai/deepseek-v4-flash",
     "displayName": "DeepSeek AI",
     "provider": "deepseek-ai",
     "capabilities": [
@@ -377,10 +377,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "DeepSeek V4 Flash is a 284B MoE model with 1M-token context optimized for fast coding and agents.",
-    "fullName": "Deepseek V4 Flash"
+    "fullName": "DeepSeek V4 Flash"
   },
   {
-    "id": "deepseek-v4-pro",
+    "id": "deepseek-ai/deepseek-v4-pro",
     "displayName": "DeepSeek AI",
     "provider": "deepseek-ai",
     "capabilities": [
@@ -403,10 +403,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "DeepSeek V4 scales to 1M-token context windows with efficient MoE architecture for coding tasks.",
-    "fullName": "Deepseek V4 Pro"
+    "fullName": "DeepSeek V4 Pro"
   },
   {
-    "id": "glm-5.1",
+    "id": "z-ai/glm-5.1",
     "displayName": "Z.ai",
     "provider": "z-ai",
     "capabilities": [
@@ -429,10 +429,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "GLM-5.1 is a flagship LLM for agentic workflows, coding, and long-horizon reasoning tasks.",
-    "fullName": "Glm 5.1"
+    "fullName": "GLM 5.1"
   },
   {
-    "id": "nemotron-3-content-safety",
+    "id": "nvidia/nemotron-3-content-safety",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -456,7 +456,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Nemotron 3 Content Safety"
   },
   {
-    "id": "synthetic-video-detector",
+    "id": "nvidia/synthetic-video-detector",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -482,7 +482,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Synthetic Video Detector"
   },
   {
-    "id": "Active Speaker Detection",
+    "id": "nvidia/Active Speaker Detection",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -508,7 +508,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Active Speaker Detection"
   },
   {
-    "id": "ising-calibration-1-35b-a3b",
+    "id": "nvidia/ising-calibration-1-35b-a3b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -531,10 +531,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Open VLM for quantum computer calibration chart understanding across a range of qubit modalities.",
-    "fullName": "Ising Calibration 1 35B A3b"
+    "fullName": "Ising Calibration 1 35B A3B"
   },
   {
-    "id": "minimax-m2.7",
+    "id": "minimaxai/minimax-m2.7",
     "displayName": "Minimaxai",
     "provider": "minimaxai",
     "capabilities": [
@@ -557,10 +557,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "MiniMax M2.7 is a 230B-parameter text-to-text AI model excelling in coding, reasoning, and office tasks.",
-    "fullName": "Minimax M2.7"
+    "fullName": "MiniMax M2.7"
   },
   {
-    "id": "gemma-4-31b-it",
+    "id": "google/gemma-4-31b-it",
     "displayName": "Google",
     "provider": "google",
     "capabilities": [
@@ -583,10 +583,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Dense 31B model delivering frontier reasoning for coding, agentic workflows, and fine-tuning.",
-    "fullName": "Gemma 4 31B It"
+    "fullName": "Gemma 4 31B IT"
   },
   {
-    "id": "mistral-small-4-119b-2603",
+    "id": "mistralai/mistral-small-4-119b-2603",
     "displayName": "Mistral AI",
     "provider": "mistralai",
     "capabilities": [
@@ -614,7 +614,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Mistral Small 4 119B 2603"
   },
   {
-    "id": "nemotron-voicechat",
+    "id": "nvidia/nemotron-voicechat",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -641,7 +641,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Nemotron Voicechat"
   },
   {
-    "id": "nemotron-3-super-120b-a12b",
+    "id": "nvidia/nemotron-3-super-120b-a12b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -664,10 +664,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Open, efficient hybrid Mamba-Transformer MoE with 1M context, excelling in agentic reasoning, coding, planning, tool calling, and more",
-    "fullName": "Nemotron 3 Super 120B A12b"
+    "fullName": "Nemotron 3 Super 120B A12B"
   },
   {
-    "id": "qwen3.5-122b-a10b",
+    "id": "qwen/qwen3.5-122b-a10b",
     "displayName": "Qwen",
     "provider": "qwen",
     "capabilities": [
@@ -691,10 +691,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "122B MoE LLM (10B active) for coding, reasoning, multimodal chat. Agent-ready.",
-    "fullName": "Qwen3.5 122B A10b"
+    "fullName": "Qwen 3.5 122B A10B"
   },
   {
-    "id": "gliner-pii",
+    "id": "nvidia/gliner-pii",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -715,10 +715,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "GLiNER PII detects Personally Identifiable Information in text.",
-    "fullName": "Gliner Pii"
+    "fullName": "GLiNER PII"
   },
   {
-    "id": "cosmos-transfer2.5-2b",
+    "id": "nvidia/cosmos-transfer2.5-2b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -739,10 +739,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Generates physics-aware video world states for physical AI development using text prompts and multiple spatial control inputs derived from real-world data or simulation.",
-    "fullName": "Cosmos Transfer2.5 2B"
+    "fullName": "Cosmos Transfer 2.5 2B"
   },
   {
-    "id": "qwen3.5-397b-a17b",
+    "id": "qwen/qwen3.5-397b-a17b",
     "displayName": "Qwen",
     "provider": "qwen",
     "capabilities": [
@@ -766,10 +766,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Next-gen Qwen 3.5 VLM (400B MoE) brings advanced vision, chat, RAG, and agentic capabilities.",
-    "fullName": "Qwen3.5 397B A17b"
+    "fullName": "Qwen 3.5 397B A17B"
   },
   {
-    "id": "step-3.5-flash",
+    "id": "stepfun-ai/step-3.5-flash",
     "displayName": "Stepfun-ai",
     "provider": "stepfun-ai",
     "capabilities": [
@@ -794,7 +794,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Step 3.5 Flash"
   },
   {
-    "id": "nemotron-content-safety-reasoning-4b",
+    "id": "nvidia/nemotron-content-safety-reasoning-4b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -818,7 +818,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Nemotron Content Safety Reasoning 4B"
   },
   {
-    "id": "nemotron-3-nano-30b-a3b",
+    "id": "nvidia/nemotron-3-nano-30b-a3b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -841,10 +841,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Open, efficient MoE model with 1M context, excelling in coding, reasoning, instruction following, tool calling, and more",
-    "fullName": "Nemotron 3 Nano 30B A3b"
+    "fullName": "Nemotron 3 Nano 30B A3B"
   },
   {
-    "id": "riva-translate-4b-instruct-v1_1",
+    "id": "nvidia/riva-translate-4b-instruct-v1_1",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -865,10 +865,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Translation model in 12 languages with few-shots example prompts capability.",
-    "fullName": "Riva Translate 4B Instruct V1_1"
+    "fullName": "Riva Translate 4B Instruct v1.1"
   },
   {
-    "id": "mistral-large-3-675b-instruct-2512",
+    "id": "mistralai/mistral-large-3-675b-instruct-2512",
     "displayName": "Mistral AI",
     "provider": "mistralai",
     "capabilities": [
@@ -894,7 +894,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Mistral Large 3 675B Instruct 2512"
   },
   {
-    "id": "ministral-14b-instruct-2512",
+    "id": "mistralai/ministral-14b-instruct-2512",
     "displayName": "Mistral AI",
     "provider": "mistralai",
     "capabilities": [
@@ -921,7 +921,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Ministral 14B Instruct 2512"
   },
   {
-    "id": "streampetr",
+    "id": "nvidia/streampetr",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -943,10 +943,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "StreamPETR offers efficient 3D object detection for autonomous driving by propagating sparse object queries temporally.",
-    "fullName": "Streampetr"
+    "fullName": "StreamPETR"
   },
   {
-    "id": "nemotron-nano-12b-v2-vl",
+    "id": "nvidia/nemotron-nano-12b-v2-vl",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -971,10 +971,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Nemotron Nano 12B v2 VL enables multi-image and video understanding, along with visual Q&A and summarization capabilities.",
-    "fullName": "Nemotron Nano 12B V2 Vl"
+    "fullName": "Nemotron Nano 12B v2 VL"
   },
   {
-    "id": "llama-3.1-nemotron-safety-guard-8b-v3",
+    "id": "nvidia/llama-3.1-nemotron-safety-guard-8b-v3",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -995,10 +995,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Leading multilingual content safety model for enhancing the safety and moderation capabilities of LLMs",
-    "fullName": "Llama 3.1 Nemotron Safety Guard 8B V3"
+    "fullName": "Llama 3.1 Nemotron Safety Guard 8B v3"
   },
   {
-    "id": "stockmark-2-100b-instruct",
+    "id": "stockmark/stockmark-2-100b-instruct",
     "displayName": "Stockmark",
     "provider": "Stockmark",
     "capabilities": [
@@ -1023,7 +1023,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Stockmark 2 100B Instruct"
   },
   {
-    "id": "qwen3-next-80b-a3b-instruct",
+    "id": "qwen/qwen3-next-80b-a3b-instruct",
     "displayName": "Qwen",
     "provider": "qwen",
     "capabilities": [
@@ -1045,10 +1045,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Qwen3-Next Instruct blends hybrid attention, sparse MoE, and stability boosts for ultra-long context AI.",
-    "fullName": "Qwen3 Next 80B A3b Instruct"
+    "fullName": "Qwen3-Next 80B A3B Instruct"
   },
   {
-    "id": "seed-oss-36b-instruct",
+    "id": "bytedance/seed-oss-36b-instruct",
     "displayName": "ByteDance",
     "provider": "bytedance",
     "capabilities": [
@@ -1070,10 +1070,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "ByteDance open-source LLM with long-context, reasoning, and agentic intelligence.",
-    "fullName": "Seed Oss 36B Instruct"
+    "fullName": "Seed-OSS 36B Instruct"
   },
   {
-    "id": "nvidia-nemotron-nano-9b-v2",
+    "id": "nvidia/nvidia-nemotron-nano-9b-v2",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1096,10 +1096,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "High-efficiency LLM with hybrid Transformer-Mamba design, excelling in reasoning and agentic tasks.",
-    "fullName": "Nvidia Nemotron Nano 9B V2"
+    "fullName": "Nemotron Nano 9B v2"
   },
   {
-    "id": "gpt-oss-20b",
+    "id": "openai/gpt-oss-20b",
     "displayName": "OpenAI",
     "provider": "openai",
     "capabilities": [
@@ -1122,10 +1122,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Smaller Mixture of Experts (MoE) text-only LLM for efficient AI reasoning and math",
-    "fullName": "Gpt Oss 20B"
+    "fullName": "GPT-OSS 20B"
   },
   {
-    "id": "gpt-oss-120b",
+    "id": "openai/gpt-oss-120b",
     "displayName": "OpenAI",
     "provider": "openai",
     "capabilities": [
@@ -1148,10 +1148,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Mixture of Experts (MoE) reasoning LLM (text-only) designed to fit within 80GB GPU.",
-    "fullName": "Gpt Oss 120B"
+    "fullName": "GPT-OSS 120B"
   },
   {
-    "id": "llama-3.3-nemotron-super-49b-v1.5",
+    "id": "nvidia/llama-3.3-nemotron-super-49b-v1.5",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1174,10 +1174,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "High efficiency model with leading accuracy for reasoning, tool calling, chat, and instruction following.",
-    "fullName": "Llama 3.3 Nemotron Super 49B V1.5"
+    "fullName": "Llama 3.3 Nemotron Super 49B v1.5"
   },
   {
-    "id": "sarvam-m",
+    "id": "sarvamai/sarvam-m",
     "displayName": "Sarvamai",
     "provider": "Sarvamai",
     "capabilities": [
@@ -1200,10 +1200,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Multilingual, hybrid-reasoning model optimized for Indian language tasks, programming, mathematical reasoning capabilities.",
-    "fullName": "Sarvam M"
+    "fullName": "Sarvam-M"
   },
   {
-    "id": "llama-guard-4-12b",
+    "id": "meta/llama-guard-4-12b",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1227,7 +1227,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama Guard 4 12B"
   },
   {
-    "id": "gemma-3n-e4b-it",
+    "id": "google/gemma-3n-e4b-it",
     "displayName": "Google",
     "provider": "google",
     "capabilities": [
@@ -1252,10 +1252,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "An edge computing AI model which accepts text, audio and image input, ideal for resource-constrained environments",
-    "fullName": "Gemma 3N E4b It"
+    "fullName": "Gemma 3n E4B IT"
   },
   {
-    "id": "gemma-3n-e2b-it",
+    "id": "google/gemma-3n-e2b-it",
     "displayName": "Google",
     "provider": "google",
     "capabilities": [
@@ -1280,10 +1280,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "An edge computing AI model which accepts text, audio and image input, ideal for resource-constrained environments",
-    "fullName": "Gemma 3N E2b It"
+    "fullName": "Gemma 3n E2B IT"
   },
   {
-    "id": "cosmos-transfer1-7b",
+    "id": "nvidia/cosmos-transfer1-7b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1307,7 +1307,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Cosmos Transfer1 7B"
   },
   {
-    "id": "Background Noise Removal",
+    "id": "nvidia/Background Noise Removal",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1333,7 +1333,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Background Noise Removal"
   },
   {
-    "id": "mistral-nemotron",
+    "id": "mistralai/mistral-nemotron",
     "displayName": "Mistral AI",
     "provider": "mistralai",
     "capabilities": [
@@ -1357,7 +1357,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Mistral Nemotron"
   },
   {
-    "id": "llama-3.1-nemotron-nano-vl-8b-v1",
+    "id": "nvidia/llama-3.1-nemotron-nano-vl-8b-v1",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1380,10 +1380,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Multi-modal vision-language model that understands text/img and creates informative responses",
-    "fullName": "Llama 3.1 Nemotron Nano Vl 8B V1"
+    "fullName": "Llama 3.1 Nemotron Nano VL 8B v1"
   },
   {
-    "id": "magpie-tts-zeroshot",
+    "id": "nvidia/magpie-tts-zeroshot",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1404,10 +1404,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Expressive and engaging text-to-speech, generated from a short audio sample.",
-    "fullName": "Magpie Tts Zeroshot"
+    "fullName": "Magpie TTS Zero-Shot"
   },
   {
-    "id": "llama-4-maverick-17b-128e-instruct",
+    "id": "meta/llama-4-maverick-17b-128e-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1433,7 +1433,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 4 Maverick 17B 128E Instruct"
   },
   {
-    "id": "sparsedrive",
+    "id": "nvidia/sparsedrive",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1455,10 +1455,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "End-to-end autonomous driving stack integrating perception, prediction, and planning with sparse scene representations for efficiency and safety.",
-    "fullName": "Sparsedrive"
+    "fullName": "SparseDrive"
   },
   {
-    "id": "bevformer",
+    "id": "nvidia/bevformer",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1480,10 +1480,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Advanced transformer for multi-frame bird's-eye-view 3D perception in autonomous driving.",
-    "fullName": "Bevformer"
+    "fullName": "BEVFormer"
   },
   {
-    "id": "llama-3.3-nemotron-super-49b-v1",
+    "id": "nvidia/llama-3.3-nemotron-super-49b-v1",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1506,10 +1506,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "High efficiency model with leading accuracy for reasoning, tool calling, chat, and instruction following.",
-    "fullName": "Llama 3.3 Nemotron Super 49B V1"
+    "fullName": "Llama 3.3 Nemotron Super 49B v1"
   },
   {
-    "id": "llama-3.1-nemotron-nano-8b-v1",
+    "id": "nvidia/llama-3.1-nemotron-nano-8b-v1",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1532,10 +1532,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Leading reasoning and agentic AI accuracy model for PC and edge.",
-    "fullName": "Llama 3.1 Nemotron Nano 8B V1"
+    "fullName": "Llama 3.1 Nemotron Nano 8B v1"
   },
   {
-    "id": "nv-embedcode-7b-v1",
+    "id": "nvidia/nv-embedcode-7b-v1",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1556,10 +1556,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "The NV-EmbedCode model is a 7B Mistral-based embedding model optimized for code retrieval, supporting text, code, and hybrid queries.",
-    "fullName": "Nv Embedcode 7B V1"
+    "fullName": "NV-EmbedCode 7B v1"
   },
   {
-    "id": "phi-4-mini-instruct",
+    "id": "microsoft/phi-4-mini-instruct",
     "displayName": "Microsoft",
     "provider": "microsoft",
     "capabilities": [
@@ -1581,10 +1581,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Lightweight multilingual LLM powering AI applications in latency bound, memory/compute constrained environments",
-    "fullName": "Phi 4 Mini Instruct"
+    "fullName": "Phi-4 Mini Instruct"
   },
   {
-    "id": "phi-4-multimodal-instruct",
+    "id": "microsoft/phi-4-multimodal-instruct",
     "displayName": "Microsoft",
     "provider": "microsoft",
     "capabilities": [
@@ -1608,10 +1608,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Cutting-edge open multimodal model exceling in high-quality reasoning from image and audio inputs.",
-    "fullName": "Phi 4 Multimodal Instruct"
+    "fullName": "Phi-4 Multimodal Instruct"
   },
   {
-    "id": "llama-3.3-70b-instruct",
+    "id": "meta/llama-3.3-70b-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1637,7 +1637,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.3 70B Instruct"
   },
   {
-    "id": "Studio Voice",
+    "id": "nvidia/Studio Voice",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1663,7 +1663,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Studio Voice"
   },
   {
-    "id": "llama-3.2-3b-instruct",
+    "id": "meta/llama-3.2-3b-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1688,7 +1688,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.2 3B Instruct"
   },
   {
-    "id": "llama-3.2-11b-vision-instruct",
+    "id": "meta/llama-3.2-11b-vision-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1714,7 +1714,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.2 11B Vision Instruct"
   },
   {
-    "id": "llama-3.2-90b-vision-instruct",
+    "id": "meta/llama-3.2-90b-vision-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1740,7 +1740,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.2 90B Vision Instruct"
   },
   {
-    "id": "llama-3.2-1b-instruct",
+    "id": "meta/llama-3.2-1b-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1766,7 +1766,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.2 1B Instruct"
   },
   {
-    "id": "dracarys-llama-3.1-70b-instruct",
+    "id": "abacusai/dracarys-llama-3.1-70b-instruct",
     "displayName": "Abacus.AI",
     "provider": "Abacus.AI",
     "capabilities": [
@@ -1791,7 +1791,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Dracarys Llama 3.1 70B Instruct"
   },
   {
-    "id": "esm2-650m",
+    "id": "meta/esm2-650m",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1813,10 +1813,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Generates embeddings of proteins from their amino acid sequences.",
-    "fullName": "Esm2 650M"
+    "fullName": "ESM2 650M"
   },
   {
-    "id": "nemotron-mini-4b-instruct",
+    "id": "nvidia/nemotron-mini-4b-instruct",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1840,7 +1840,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Nemotron Mini 4B Instruct"
   },
   {
-    "id": "gemma-2-2b-it",
+    "id": "google/gemma-2-2b-it",
     "displayName": "Google",
     "provider": "google",
     "capabilities": [
@@ -1861,10 +1861,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Advanced small language generative AI model for edge applications",
-    "fullName": "Gemma 2 2B It"
+    "fullName": "Gemma 2 2B IT"
   },
   {
-    "id": "llama-3.1-70b-instruct",
+    "id": "meta/llama-3.1-70b-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1889,7 +1889,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.1 70B Instruct"
   },
   {
-    "id": "llama-3.1-8b-instruct",
+    "id": "meta/llama-3.1-8b-instruct",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -1914,7 +1914,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "fullName": "Llama 3.1 8B Instruct"
   },
   {
-    "id": "nv-embed-v1",
+    "id": "nvidia/nv-embed-v1",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -1935,10 +1935,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Generates high-quality numerical embeddings from text inputs.",
-    "fullName": "Nv Embed V1"
+    "fullName": "NV-Embed v1"
   },
   {
-    "id": "solar-10.7b-instruct",
+    "id": "upstage/solar-10.7b-instruct",
     "displayName": "Upstage",
     "provider": "upstage",
     "capabilities": [
@@ -1959,10 +1959,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Excels in NLP tasks, particularly in instruction-following, reasoning, and mathematics.",
-    "fullName": "Solar 10.7b Instruct"
+    "fullName": "Solar 10.7B Instruct"
   },
   {
-    "id": "paligemma",
+    "id": "google/paligemma",
     "displayName": "Google",
     "provider": "google",
     "capabilities": [
@@ -1984,10 +1984,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Vision language model adept at comprehending text and visual inputs to produce informative responses",
-    "fullName": "Paligemma"
+    "fullName": "PaLiGemma"
   },
   {
-    "id": "rerank-qa-mistral-4b",
+    "id": "nvidia/rerank-qa-mistral-4b",
     "displayName": "NVIDIA",
     "provider": "nvidia",
     "capabilities": [
@@ -2008,10 +2008,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "GPU-accelerated model optimized for providing a probability score that a given passage contains the information to answer a question.",
-    "fullName": "Rerank Qa Mistral 4B"
+    "fullName": "Rerank QA Mistral 4B"
   },
   {
-    "id": "esmfold",
+    "id": "meta/esmfold",
     "displayName": "Meta",
     "provider": "meta",
     "capabilities": [
@@ -2033,10 +2033,10 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "Predicts the 3D structure of a protein from its amino acid sequence.",
-    "fullName": "Esmfold"
+    "fullName": "ESMFold"
   },
   {
-    "id": "mixtral-8x7b-instruct-v0.1",
+    "id": "mistralai/mixtral-8x7b-instruct-v0.1",
     "displayName": "Mistral AI",
     "provider": "mistralai",
     "capabilities": [
@@ -2059,7 +2059,7 @@ export const modelRegistry: ModelRegistryItem[] = [
     "apiKeyEnv": "NVIDIA_API_KEY",
     "enabled": true,
     "description": "An MOE LLM that follows instructions, completes requests, and generates creative text.",
-    "fullName": "Mixtral 8x7b Instruct V0.1"
+    "fullName": "Mixtral 8x7B Instruct v0.1"
   }
 ];
 
