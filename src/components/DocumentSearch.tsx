@@ -53,10 +53,15 @@ export default function DocumentSearch({ apiKey }: DocumentSearchProps) {
           setSelectedDocIds(parsed.map((d: any) => d.id));
         }
       } else if (res.ok) {
-        const data = await res.json();
-        setDocuments(data);
-        if (data.length > 0) {
-          setSelectedDocIds(data.map((d: any) => d.id));
+        const resText = await res.text();
+        try {
+          const data = JSON.parse(resText);
+          setDocuments(data);
+          if (data.length > 0) {
+            setSelectedDocIds(data.map((d: any) => d.id));
+          }
+        } catch (err) {
+          console.error("Failed to parse documents JSON response", err);
         }
       }
     } catch (e) {
@@ -155,7 +160,13 @@ export default function DocumentSearch({ apiKey }: DocumentSearchProps) {
               chunks.push(currentWords.join(" "));
             }
 
-            const localDocs = JSON.parse(localStorage.getItem("nim_local_rag_documents") || "[]");
+            let localDocs = [];
+            try {
+              localDocs = JSON.parse(localStorage.getItem("nim_local_rag_documents") || "[]");
+              if (!Array.isArray(localDocs)) localDocs = [];
+            } catch (err) {
+              console.error("Failed to parse local RAG docs", err);
+            }
             const completedDoc: DocItem = {
               id: "local_rag_" + Math.random().toString(36).substring(7),
               name: file.name,
@@ -189,7 +200,13 @@ export default function DocumentSearch({ apiKey }: DocumentSearchProps) {
             throw new Error(errMsg);
           }
 
-          const data = await uploadRes.json();
+          const uploadResText = await uploadRes.text();
+          let data;
+          try {
+            data = JSON.parse(uploadResText);
+          } catch (err) {
+            throw new Error(`Invalid JSON response from upload API: ${uploadResText.slice(0, 100)}`);
+          }
           setDocuments((prev) =>
             prev.map((d) =>
               d.id === tempId
@@ -227,9 +244,16 @@ export default function DocumentSearch({ apiKey }: DocumentSearchProps) {
       });
       if (res.status === 404) {
         const localDocs = localStorage.getItem("nim_local_rag_documents") || "[]";
-        const parsed = JSON.parse(localDocs).filter((d: any) => d.id !== id);
-        localStorage.setItem("nim_local_rag_documents", JSON.stringify(parsed));
-        setDocuments(parsed);
+        let parsed = [];
+        try {
+          parsed = JSON.parse(localDocs);
+          if (!Array.isArray(parsed)) parsed = [];
+        } catch (err) {
+          console.error("Failed to parse local RAG docs", err);
+        }
+        const filtered = parsed.filter((d: any) => d.id !== id);
+        localStorage.setItem("nim_local_rag_documents", JSON.stringify(filtered));
+        setDocuments(filtered);
         setSelectedDocIds((prev) => prev.filter((dId) => dId !== id));
       } else if (res.ok) {
         setDocuments((prev) => prev.filter((d) => d.id !== id));
@@ -272,7 +296,14 @@ export default function DocumentSearch({ apiKey }: DocumentSearchProps) {
         console.warn("Express backend RAG query returned 404. Falling back to direct browser LLM search & local keyword scoring.");
         
         // 1. Gather all chunks from selected documents in localStorage
-        const localDocs = JSON.parse(localStorage.getItem("nim_local_rag_documents") || "[]");
+        const localDocsStr = localStorage.getItem("nim_local_rag_documents") || "[]";
+        let localDocs = [];
+        try {
+          localDocs = JSON.parse(localDocsStr);
+          if (!Array.isArray(localDocs)) localDocs = [];
+        } catch (err) {
+          console.error("Failed to parse local RAG docs", err);
+        }
         const selectedDocs = localDocs.filter((d: any) => selectedDocIds.includes(d.id));
         
         const candidates: { docName: string; text: string; score: number }[] = [];
@@ -335,8 +366,14 @@ ${contextText}`;
           throw new Error(`Direct NVIDIA Chat API failed: ${errText}`);
         }
 
-        const directChatData = await directChatRes.json();
-        const answer = directChatData.choices[0].message.content;
+        const directChatText = await directChatRes.text();
+        let directChatData;
+        try {
+          directChatData = JSON.parse(directChatText);
+        } catch (err) {
+          throw new Error(`Invalid JSON response from direct NVIDIA Chat API: ${directChatText.slice(0, 100)}`);
+        }
+        const answer = directChatData.choices?.[0]?.message?.content || "";
 
         setAnswer(answer);
         setCitations(topCandidates.map((c, i) => ({
@@ -355,7 +392,13 @@ ${contextText}`;
         throw new Error(errorText);
       }
 
-      const data = await res.json();
+      const resText = await res.text();
+      let data;
+      try {
+        data = JSON.parse(resText);
+      } catch (err) {
+        throw new Error(`Invalid JSON response from query API: ${resText.slice(0, 100)}`);
+      }
       setAnswer(data.answer);
       setCitations(data.citations || []);
     } catch (e: any) {

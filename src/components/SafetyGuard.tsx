@@ -39,7 +39,12 @@ export default function SafetyGuard({ apiKey }: SafetyGuardProps) {
       const res = await fetch("/api/safety/logs");
       if (res.status === 404) {
         const localLogs = localStorage.getItem("nim_local_safety_logs") || "[]";
-        setAuditLogs(JSON.parse(localLogs));
+        try {
+          setAuditLogs(JSON.parse(localLogs));
+        } catch (parseErr) {
+          console.error("Failed to parse local safety logs", parseErr);
+          setAuditLogs([]);
+        }
       } else if (res.ok) {
         const data = await res.json();
         setAuditLogs(data);
@@ -178,14 +183,26 @@ export default function SafetyGuard({ apiKey }: SafetyGuardProps) {
           riskScore: !inputIsSafe ? 0.985 : undefined,
           output: llmResponse,
         };
-        const localLogs = JSON.parse(localStorage.getItem("nim_local_safety_logs") || "[]");
+        let localLogs = [];
+        try {
+          localLogs = JSON.parse(localStorage.getItem("nim_local_safety_logs") || "[]");
+          if (!Array.isArray(localLogs)) localLogs = [];
+        } catch (parseErr) {
+          console.error("Failed to parse local safety logs", parseErr);
+        }
         localLogs.unshift(logEntry);
         localStorage.setItem("nim_local_safety_logs", JSON.stringify(localLogs));
       } else if (!response.ok) {
         const errText = await response.text();
         throw new Error(errText);
       } else {
-        data = await response.json();
+        const responseText = await response.text();
+        try {
+          data = JSON.parse(responseText);
+        } catch (jsonErr) {
+          console.error("Failed to parse safety check response JSON:", responseText, jsonErr);
+          throw new Error(`Invalid JSON response from server: ${responseText.slice(0, 100)}`);
+        }
       }
 
       setPiiResult(data.pii);

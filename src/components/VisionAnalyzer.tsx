@@ -141,14 +141,24 @@ export default function VisionAnalyzer({ apiKey }: VisionAnalyzerProps) {
           throw new Error(`Direct NVIDIA API failed: ${errText}`);
         }
 
-        const directData = await directRes.json();
-        contentText = directData.choices[0].message.content;
+        const directText = await directRes.text();
+        try {
+          const directData = JSON.parse(directText);
+          contentText = directData.choices?.[0]?.message?.content || "";
+        } catch (err) {
+          throw new Error(`Invalid JSON response from direct API: ${directText.slice(0, 100)}`);
+        }
       } else if (!response.ok) {
         const errText = await response.text();
         throw new Error(errText);
       } else {
-        const data = await response.json();
-        contentText = data.content;
+        const resText = await response.text();
+        try {
+          const data = JSON.parse(resText);
+          contentText = data.content;
+        } catch (err) {
+          throw new Error(`Invalid JSON response from server: ${resText.slice(0, 100)}`);
+        }
       }
       setResult(contentText);
     } catch (e: any) {

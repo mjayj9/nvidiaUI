@@ -1,0 +1,503 @@
+AI-readable normalized catalog
+Source order preserved | Page 1 of 12
+AI 가 읽기 쉬운 모델 카탈로그
+원문 순서 보존 · 구조화 정리본
+총 77 개 항목을 원문의 배열 순서 그대로 정리했습니다. 각 항목은 제공사, 접근 방식, 모델명, 설명, 분류, 추가 태그 수, 원문 수치, 게
+시 경과 표기로 분리했습니다.
+정규화 원칙
+• 필드명은 반복되는 원문 순서를 기준으로 붙였습니다.
+• 원문에 수치의 의미가 적혀 있지 않아 “원문 수치”로 표시했으며, 값은 수정하지 않았습니다.
+• 누락된 값은 “기재 없음”으로 표시했습니다.
+• Downloadable / Free Endpoint 표기는 원문 그대로 유지했습니다.
+필드 순서
+번호 → 제공사 ID / 표시명 → 접근 방식 → 모델명 → 설명 → 분류 → 추가 태그 수 → 원문 수치 → 게시 경과
+001. minimax-m3
+제공사 ID: minimaxai | 표시명: Minimaxai
+접근 방식 Free Endpoint | 게시 경과: 11d
+분류 / 수치 분류: coding | 추가 태그 수: +2 | 원문 수치: 3.86M
+설명: MiniMax M3 Preview is a multimodal MoE vision-language model with strong reasoning,
+coding, and tool-calling capabilities.
+002. diffusiongemma-26b-a4b-it
+제공사 ID: google | 표시명: Google
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 13d
+분류 / 수치 분류: diffusion-llm | 추가 태그 수: +2 | 원문 수치: 2.2M
+설명: Diffusion-based 26B parameter LLM enabling parallel token generation for real-time text
+apps
+003. nemotron-3-ultra-550b-a55b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 20d
+분류 / 수치 분류: Agent | 추가 태그 수: +4 | 원문 수치: 7.73M
+설명: Open, efficient hybrid Mamba-Transformer MoE with 1M context, excelling in agentic
+reasoning, coding, planning, tool calling, and more
+004. nemotron-3.5-content-safety
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 21d
+분류 / 수치 분류: llm safety | 추가 태그 수: +3 | 원문 수치: 1.19M
+설명: Multilingual, multimodal model for detecting unsafe and toxic content.
+005. cosmos3-nano
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 23d
+분류 / 수치 분류: autonomous vehicles | 추가 태그 수: +5 | 원문 수치: 1.79K
+설명: Generates physics-aware videos from text prompts or an image prompt for physical AI
+development.
+
+-- 1 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 2 of 12
+006. cosmos3-nano-reasoner
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 23d
+분류 / 수치 분류: video understanding | 추가 태그 수: +8 | 원문 수치: 1.94K
+설명: Vision language model that excels in understanding the physical world using structured
+reasoning on videos or images.
+007. step-3.7-flash
+제공사 ID: stepfun-ai | 표시명: Stepfun-ai
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 26d
+분류 / 수치 분류: Coding | 추가 태그 수: +2 | 원문 수치: 4.34M
+설명: A sparse MoE multimodal reasoning model good for enterprise, agentic and coding tasks.
+008. kimi-k2.6
+제공사 ID: moonshotai | 표시명: Moonshotai
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1mo
+분류 / 수치 분류: Multimodal | 추가 태그 수: +3 | 원문 수치: 7.09M
+설명: 1T multimodal MoE for long-horizon coding, agentic tool use, and image/video
+understanding.
+009. mistral-medium-3.5-128b
+제공사 ID: mistralai | 표시명: Mistral AI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1mo
+분류 / 수치 분류: coding | 추가 태그 수: +3 | 원문 수치: 3.76M
+설명: A high performing model for text generation, coding and agentic use cases
+010. nemotron-3-nano-omni-30b-a3b-reasoning
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1mo
+분류 / 수치 분류: Image-to-Text | 추가 태그 수: +4 | 원문 수치: 7.54M
+설명: Nemotron 3 Nano Omni is an omni-modal reasoning model that understands images, video,
+speech, text.
+011. deepseek-v4-flash
+제공사 ID: deepseek-ai | 표시명: DeepSeek AI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: MoE | 추가 태그 수: +3 | 원문 수치: 15.16M
+설명: DeepSeek V4 Flash is a 284B MoE model with 1M-token context optimized for fast coding
+and agents.
+012. deepseek-v4-pro
+제공사 ID: deepseek-ai | 표시명: DeepSeek AI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: Moe | 추가 태그 수: +3 | 원문 수치: 7.5M
+설명: DeepSeek V4 scales to 1M-token context windows with efficient MoE architecture for
+coding tasks.
+
+-- 2 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 3 of 12
+013. glm-5.1
+제공사 ID: z-ai | 표시명: Z.ai
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: Agentic AI | 추가 태그 수: +3 | 원문 수치: 27.59M
+설명: GLM-5.1 is a flagship LLM for agentic workflows, coding, and long-horizon reasoning tasks.
+014. nemotron-3-content-safety
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: llm safety | 추가 태그 수: +3 | 원문 수치: 230K
+설명: Multilingual, multimodal model for detecting unsafe and toxic content.
+015. synthetic-video-detector
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: broadcast | 추가 태그 수: +4 | 원문 수치: 90.31K
+설명: NVIDIA Synthetic Video Detector is an AI-powered micro-service for detecting AI-generated
+(synthetic) videos.
+016. Active Speaker Detection
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: broadcast | 추가 태그 수: +7 | 원문 수치: 473
+설명: Detect and track speaker identities across video frames.
+017. ising-calibration-1-35b-a3b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: Quantum | 추가 태그 수: +3 | 원문 수치: 332K
+설명: Open VLM for quantum computer calibration chart understanding across a range of qubit
+modalities.
+018. minimax-m2.7
+제공사 ID: minimaxai | 표시명: Minimaxai
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: reasoning | 추가 태그 수: +2 | 원문 수치: 14.36M
+설명: MiniMax M2.7 is a 230B-parameter text-to-text AI model excelling in coding, reasoning,
+and office tasks.
+019. gemma-4-31b-it
+제공사 ID: google | 표시명: Google
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 2mo
+분류 / 수치 분류: reasoning | 추가 태그 수: +3 | 원문 수치: 5.49M
+설명: Dense 31B model delivering frontier reasoning for coding, agentic workflows, and fine-
+tuning.
+
+-- 3 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 4 of 12
+020. mistral-small-4-119b-2603
+제공사 ID: mistralai | 표시명: Mistral AI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 3mo
+분류 / 수치 분류: code generation | 추가 태그 수: +2 | 원문 수치: 12.52M
+설명: Hybrid MoE model unifying instruct, reasoning, and coding with multimodal input and 256k
+context
+021. nemotron-voicechat
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 3mo
+분류 / 수치 분류: English | 추가 태그 수: +2 | 원문 수치: 1.77K
+설명: Nemotron 3 Voicechat
+022. nemotron-3-super-120b-a12b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 3mo
+분류 / 수치 분류: MoE | 추가 태그 수: +4 | 원문 수치: 60.41M
+설명: Open, efficient hybrid Mamba-Transformer MoE with 1M context, excelling in agentic
+reasoning, coding, planning, tool calling, and more
+023. qwen3.5-122b-a10b
+제공사 ID: qwen | 표시명: Qwen
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 3mo
+분류 / 수치 분류: tool calling | 추가 태그 수: +3 | 원문 수치: 10.33M
+설명: 122B MoE LLM (10B active) for coding, reasoning, multimodal chat. Agent-ready.
+024. gliner-pii
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 3mo
+분류 / 수치 분류: PII Detection | 추가 태그 수: +1 | 원문 수치: 243K
+설명: GLiNER PII detects Personally Identifiable Information in text.
+025. cosmos-transfer2.5-2b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 3mo
+분류 / 수치 분류: Synthetic Data Generation | 추가 태그 수: +4 | 원문 수치: 기재 없음
+설명: Generates physics-aware video world states for physical AI development using text prompts
+and multiple spatial control inputs derived from real-world data or simulation.
+026. qwen3.5-397b-a17b
+제공사 ID: qwen | 표시명: Qwen
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 4mo
+분류 / 수치 분류: MoE | 추가 태그 수: +3 | 원문 수치: 13.15M
+설명: Next-gen Qwen 3.5 VLM (400B MoE) brings advanced vision, chat, RAG, and agentic
+capabilities.
+
+-- 4 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 5 of 12
+027. step-3.5-flash
+제공사 ID: stepfun-ai | 표시명: Stepfun-ai
+접근 방식 Free Endpoint | 게시 경과: 4mo
+분류 / 수치 분류: Agentic | 추가 태그 수: +2 | 원문 수치: 11.71M
+설명: 200B open-source reasoning engine with sparse MoE powering frontier agentic AI.
+028. nemotron-content-safety-reasoning-4b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 5mo
+분류 / 수치 분류: NeMo Guardrails | 추가 태그 수: +3 | 원문 수치: 145K
+설명: A context-aware safety model that applies reasoning to enforce domain-specific policies.
+029. nemotron-3-nano-30b-a3b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 6mo
+분류 / 수치 분류: MoE | 추가 태그 수: +3 | 원문 수치: 10.96M
+설명: Open, efficient MoE model with 1M context, excelling in coding, reasoning, instruction
+following, tool calling, and more
+030. riva-translate-4b-instruct-v1_1
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 6mo
+분류 / 수치 분류: nvidia nim | 추가 태그 수: +2 | 원문 수치: 282K
+설명: Translation model in 12 languages with few-shots example prompts capability.
+031. mistral-large-3-675b-instruct-2512
+제공사 ID: mistralai | 표시명: Mistral AI
+접근 방식 Free Endpoint | 게시 경과: 6mo
+분류 / 수치 분류: language generation | 추가 태그 수: +3 | 원문 수치: 3.22M
+설명: A state-of-the-art general purpose MoE VLM ideal for chat, agentic and instruction based
+use cases.
+032. ministral-14b-instruct-2512
+제공사 ID: mistralai | 표시명: Mistral AI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 6mo
+분류 / 수치 분류: language generation | 추가 태그 수: +3 | 원문 수치: 3.62M
+설명: A general purpose VLM ideal for chat and instruction based use cases
+033. streampetr
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 7mo
+분류 / 수치 분류: autonomous vehicles | 추가 태그 수: +3 | 원문 수치: 250
+설명: StreamPETR offers efficient 3D object detection for autonomous driving by propagating
+sparse object queries temporally.
+
+-- 5 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 6 of 12
+034. nemotron-nano-12b-v2-vl
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 7mo
+분류 / 수치 분류: language generation | 추가 태그 수: +3 | 원문 수치: 2.47M
+설명: Nemotron Nano 12B v2 VL enables multi-image and video understanding, along with visual
+Q&A and summarization capabilities.
+035. llama-3.1-nemotron-safety-guard-8b-v3
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 7mo
+분류 / 수치 분류: content moderation | 추가 태그 수: +4 | 원문 수치: 336K
+설명: Leading multilingual content safety model for enhancing the safety and moderation
+capabilities of LLMs
+036. stockmark-2-100b-instruct
+제공사 ID: Stockmark | 표시명: Stockmark
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 9mo
+분류 / 수치 분류: sovereign ai | 추가 태그 수: +3 | 원문 수치: 1.57M
+설명: Japanese-specialized large-language-model for enterprises to read and understand complex
+business documents.
+037. qwen3-next-80b-a3b-instruct
+제공사 ID: qwen | 표시명: Qwen
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 9mo
+분류 / 수치 분류: text-generation | 추가 태그 수: +1 | 원문 수치: 26.97M
+설명: Qwen3-Next Instruct blends hybrid attention, sparse MoE, and stability boosts for ultra-long
+context AI.
+038. seed-oss-36b-instruct
+제공사 ID: bytedance | 표시명: ByteDance
+접근 방식 Free Endpoint | 게시 경과: 9mo
+분류 / 수치 분류: thinking budget | 추가 태그 수: +2 | 원문 수치: 1.18M
+설명: ByteDance open-source LLM with long-context, reasoning, and agentic intelligence.
+039. nvidia-nemotron-nano-9b-v2
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 10mo
+분류 / 수치 분류: thinking budget | 추가 태그 수: +1 | 원문 수치: 988K
+설명: High-efficiency LLM with hybrid Transformer-Mamba design, excelling in reasoning and
+agentic tasks.
+040. gpt-oss-20b
+제공사 ID: openai | 표시명: OpenAI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 10mo
+분류 / 수치 분류: reasoning | 추가 태그 수: +3 | 원문 수치: 18.45M
+설명: Smaller Mixture of Experts (MoE) text-only LLM for efficient AI reasoning and math
+
+-- 6 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 7 of 12
+041. gpt-oss-120b
+제공사 ID: openai | 표시명: OpenAI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 10mo
+분류 / 수치 분류: reasoning | 추가 태그 수: +3 | 원문 수치: 57.12M
+설명: Mixture of Experts (MoE) reasoning LLM (text-only) designed to fit within 80GB GPU.
+042. llama-3.3-nemotron-super-49b-v1.5
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: advanced reasoning | 추가 태그 수: +3 | 원문 수치: 3.17M
+설명: High efficiency model with leading accuracy for reasoning, tool calling, chat, and instruction
+following.
+043. sarvam-m
+제공사 ID: Sarvamai | 표시명: Sarvamai
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: coding | 추가 태그 수: +5 | 원문 수치: 236K
+설명: Multilingual, hybrid-reasoning model optimized for Indian language tasks, programming,
+mathematical reasoning capabilities.
+044. llama-guard-4-12b
+제공사 ID: meta | 표시명: Meta
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: LLM Multimodal Safety | 추가 태그 수: +3 | 원문 수치: 222K
+설명: Multi-modal model to classify safety for input prompts as well output responses.
+045. gemma-3n-e4b-it
+제공사 ID: google | 표시명: Google
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: language generation | 추가 태그 수: +3 | 원문 수치: 3.79M
+설명: An edge computing AI model which accepts text, audio and image input, ideal for resource-
+constrained environments
+046. gemma-3n-e2b-it
+제공사 ID: google | 표시명: Google
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: language generation | 추가 태그 수: +3 | 원문 수치: 33.75M
+설명: An edge computing AI model which accepts text, audio and image input, ideal for resource-
+constrained environments
+047. cosmos-transfer1-7b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: Synthetic Data Generation | 추가 태그 수: +4 | 원문 수치: 250
+설명: Generates physics-aware video world states for physical AI development using text prompts
+and multiple spatial control inputs derived from real-world data or simulation.
+
+-- 7 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 8 of 12
+048. Background Noise Removal
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: denoising | 추가 태그 수: +3 | 원문 수치: 556
+설명: Removes unwanted noises from audio improving speech intelligibility.
+049. mistral-nemotron
+제공사 ID: mistralai | 표시명: Mistral AI
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: language generation | 추가 태그 수: +2 | 원문 수치: 1.49M
+설명: Built for agentic workflows, this model excels in coding, instruction following, and function
+calling
+050. llama-3.1-nemotron-nano-vl-8b-v1
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: doc intelligence | 추가 태그 수: +2 | 원문 수치: 10.15M
+설명: Multi-modal vision-language model that understands text/img and creates informative
+responses
+051. magpie-tts-zeroshot
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: TTS | 추가 태그 수: +3 | 원문 수치: 19.38K
+설명: Expressive and engaging text-to-speech, generated from a short audio sample.
+052. llama-4-maverick-17b-128e-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: language generation | 추가 태그 수: +3 | 원문 수치: 20.32M
+설명: A general purpose multimodal, multilingual 128 MoE model with 17B parameters.
+053. sparsedrive
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: autonomous vehicles | 추가 태그 수: +3 | 원문 수치: 76
+설명: End-to-end autonomous driving stack integrating perception, prediction, and planning with
+sparse scene representations for efficiency and safety.
+054. bevformer
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: autonomous vehicles | 추가 태그 수: +3 | 원문 수치: 115
+설명: Advanced transformer for multi-frame bird's-eye-view 3D perception in autonomous
+driving.
+
+-- 8 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 9 of 12
+055. llama-3.3-nemotron-super-49b-v1
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: advanced reasoning | 추가 태그 수: +3 | 원문 수치: 4.93M
+설명: High efficiency model with leading accuracy for reasoning, tool calling, chat, and instruction
+following.
+056. llama-3.1-nemotron-nano-8b-v1
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: advanced reasoning | 추가 태그 수: +3 | 원문 수치: 1.47M
+설명: Leading reasoning and agentic AI accuracy model for PC and edge.
+057. nv-embedcode-7b-v1
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: nemo retriever | 추가 태그 수: +2 | 원문 수치: 1.38M
+설명: The NV-EmbedCode model is a 7B Mistral-based embedding model optimized for code
+retrieval, supporting text, code, and hybrid queries.
+058. phi-4-mini-instruct
+제공사 ID: microsoft | 표시명: Microsoft
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Chat | 추가 태그 수: +3 | 원문 수치: 445K
+설명: Lightweight multilingual LLM powering AI applications in latency bound, memory/compute
+constrained environments
+059. phi-4-multimodal-instruct
+제공사 ID: microsoft | 표시명: Microsoft
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Speech Recognition | 추가 태그 수: +4 | 원문 수치: 244K
+설명: Cutting-edge open multimodal model exceling in high-quality reasoning from image and
+audio inputs.
+060. llama-3.3-70b-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Instruction following | 추가 태그 수: +4 | 원문 수치: 18.79M
+설명: Advanced LLM for reasoning, math, general knowledge, and function calling
+061. Studio Voice
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: broadcast | 추가 태그 수: +6 | 원문 수치: 1.25K
+설명: Enhance input speech recorded with low-quality microphones in noisy or reverberant
+environments, producing studio-quality speech.
+
+-- 9 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 10 of 12
+062. llama-3.2-3b-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Language Generation | 추가 태그 수: +3 | 원문 수치: 28.93K, 1.22M
+설명: Advanced state-of-the-art small language model with language understanding, superior
+reasoning, and text generation.
+063. llama-3.2-11b-vision-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Image-Text Retrieval | 추가 태그 수: +4 | 원문 수치: 1.67M
+설명: Cutting-edge vision-language model exceling in high-quality reasoning from images.
+064. llama-3.2-90b-vision-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Image-Text Retrieval | 추가 태그 수: +4 | 원문 수치: 2.69M
+설명: Cutting-edge vision-Language model exceling in high-quality reasoning from images.
+065. llama-3.2-1b-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Code Generation | 추가 태그 수: +3 | 원문 수치: 44.31K, 290K
+설명: Advanced state-of-the-art small language model with language understanding, superior
+reasoning, and text generation.
+066. dracarys-llama-3.1-70b-instruct
+제공사 ID: Abacus.AI | 표시명: Abacus.AI
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Code Generation | 추가 태그 수: +1 | 원문 수치: 783K
+설명: Fine-tuned Llama 3.1 70B model for code generation, summarization, and multi-language
+tasks.
+067. esm2-650m
+제공사 ID: meta | 표시명: Meta
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: nim | 추가 태그 수: +4 | 원문 수치: 128K
+설명: Generates embeddings of proteins from their amino acid sequences.
+068. nemotron-mini-4b-instruct
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Chat | 추가 태그 수: +2 | 원문 수치: 1.53M
+설명: Optimized SLM for on-device inference and fine-tuned for roleplay, RAG and function
+calling
+
+-- 10 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 11 of 12
+069. gemma-2-2b-it
+제공사 ID: google | 표시명: Google
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Chat | 추가 태그 수: +3 | 원문 수치: 1.42M
+설명: Advanced small language generative AI model for edge applications
+070. llama-3.1-70b-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Chat | 추가 태그 수: +3 | 원문 수치: 3.9M
+설명: Powers complex conversations with superior contextual understanding, reasoning and text
+generation.
+071. llama-3.1-8b-instruct
+제공사 ID: meta | 표시명: Meta
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: Chat | 추가 태그 수: +4 | 원문 수치: 25.09M
+설명: Advanced state-of-the-art model with language understanding, superior reasoning, and text
+generation.
+072. nv-embed-v1
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: Non-Commercial Use Only | 추가 태그 수: +2 | 원문 수치: 3.83M
+설명: Generates high-quality numerical embeddings from text inputs.
+073. solar-10.7b-instruct
+제공사 ID: upstage | 표시명: Upstage
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Non-Commercial Use Only | 추가 태그 수: +4 | 원문 수치: 449K
+설명: Excels in NLP tasks, particularly in instruction-following, reasoning, and mathematics.
+074. paligemma
+제공사 ID: google | 표시명: Google
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: image | 추가 태그 수: +8 | 원문 수치: 10.22K
+설명: Vision language model adept at comprehending text and visual inputs to produce
+informative responses
+075. rerank-qa-mistral-4b
+제공사 ID: nvidia | 표시명: NVIDIA
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: Ranking | 추가 태그 수: +2 | 원문 수치: 483K
+설명: GPU-accelerated model optimized for providing a probability score that a given passage
+contains the information to answer a question.
+
+-- 11 of 12 --
+
+AI-readable normalized catalog
+Source order preserved | Page 12 of 12
+076. esmfold
+제공사 ID: meta | 표시명: Meta
+접근 방식 Free Endpoint | 게시 경과: 1y
+분류 / 수치 분류: biology | 추가 태그 수: +4 | 원문 수치: 566K
+설명: Predicts the 3D structure of a protein from its amino acid sequence.
+077. mixtral-8x7b-instruct-v0.1
+제공사 ID: mistralai | 표시명: Mistral AI
+접근 방식 Downloadable + Free Endpoint | 게시 경과: 11mo
+분류 / 수치 분류: Advanced Reasoning | 추가 태그 수: +4 | 원문 수치: 996K
+설명: An MOE LLM that follows instructions, completes requests, and generates creative text.
+
+-- 12 of 12 --
+

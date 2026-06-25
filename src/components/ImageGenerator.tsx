@@ -109,18 +109,28 @@ export default function ImageGenerator({ apiKey }: ImageGeneratorProps) {
           throw new Error(`Direct NVIDIA API failed: ${errText}`);
         }
 
-        const directData = await directRes.json();
-        data = {
-          images: directData.data.map((item: any) => ({
-            url: `data:image/png;base64,${item.b64_json}`,
-            seed: item.seed || payload.seed,
-          }))
-        };
+        const directText = await directRes.text();
+        try {
+          const directData = JSON.parse(directText);
+          data = {
+            images: directData.data.map((item: any) => ({
+              url: `data:image/png;base64,${item.b64_json}`,
+              seed: item.seed || payload.seed,
+            }))
+          };
+        } catch (err) {
+          throw new Error(`Invalid JSON response from direct API: ${directText.slice(0, 100)}`);
+        }
       } else if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText);
       } else {
-        data = await response.json();
+        const resText = await response.text();
+        try {
+          data = JSON.parse(resText);
+        } catch (err) {
+          throw new Error(`Invalid JSON response from server: ${resText.slice(0, 100)}`);
+        }
       }
       
       const newImages: GeneratedImage[] = data.images.map((img: any) => ({

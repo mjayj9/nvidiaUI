@@ -105,7 +105,19 @@ async function startServer() {
         headers: { Authorization: apiKey },
       });
 
-      const data = await response.json();
+      if (!response.ok) {
+        const errorText = await response.text();
+        return res.status(response.status).json({ error: errorText || `NVIDIA API returned status ${response.status}` });
+      }
+
+      const resText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(resText);
+      } catch (err) {
+        return res.status(500).json({ error: `Invalid JSON response from NVIDIA models API: ${resText.slice(0, 100)}` });
+      }
+
       res.status(response.status).json(data);
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -271,7 +283,14 @@ async function startServer() {
         throw new Error(errText);
       }
 
-      const data = await response.json();
+      const resText = await response.text();
+      let data;
+      try {
+        data = JSON.parse(resText);
+      } catch (err) {
+        throw new Error(`Invalid JSON response from NVIDIA Vision API: ${resText.slice(0, 100)}`);
+      }
+
       res.json({ content: data.choices[0].message.content });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -353,7 +372,14 @@ async function startServer() {
         throw new Error(`Embedding generation failed: ${errText}`);
       }
 
-      const embeddingData = await embeddingsResponse.json();
+      const embText = await embeddingsResponse.text();
+      let embeddingData;
+      try {
+        embeddingData = JSON.parse(embText);
+      } catch (err) {
+        throw new Error(`Invalid JSON response from embeddings API: ${embText.slice(0, 100)}`);
+      }
+
       embeddingData.data.forEach((item: any, idx: number) => {
         if (ragDb[docId].chunks[idx]) {
           ragDb[docId].chunks[idx].vector = item.embedding;
@@ -397,7 +423,14 @@ async function startServer() {
         throw new Error(`Query embedding failed: ${errText}`);
       }
 
-      const queryEmbeddingData = await queryEmbeddingRes.json();
+      const qEmbText = await queryEmbeddingRes.text();
+      let queryEmbeddingData;
+      try {
+        queryEmbeddingData = JSON.parse(qEmbText);
+      } catch (err) {
+        throw new Error(`Invalid JSON response from query embedding API: ${qEmbText.slice(0, 100)}`);
+      }
+
       const queryVector = queryEmbeddingData.data[0].embedding;
 
       // 2. Perform Cosine Similarity across selected documents
@@ -440,8 +473,14 @@ async function startServer() {
         });
 
         if (rerankResponse.ok) {
-          const rerankData = await rerankResponse.json();
-          const rankItems = rerankData.rankings || rerankData.results || [];
+          const rerankText = await rerankResponse.text();
+          let rerankData;
+          try {
+            rerankData = JSON.parse(rerankText);
+          } catch (err) {
+            console.error("Failed to parse rerank response", err);
+          }
+          const rankItems = (rerankData?.rankings || rerankData?.results || []);
           rerankedResults = rankItems.map((r: any) => {
             const candidate = topCandidates[r.index];
             return {
@@ -483,7 +522,14 @@ ${contextText}`;
         throw new Error(`LLM synthesis failed: ${errText}`);
       }
 
-      const chatData = await chatResponse.json();
+      const chatText = await chatResponse.text();
+      let chatData;
+      try {
+        chatData = JSON.parse(chatText);
+      } catch (err) {
+        throw new Error(`Invalid JSON response from synthesis API: ${chatText.slice(0, 100)}`);
+      }
+
       const answer = chatData.choices[0].message.content;
 
       res.json({
