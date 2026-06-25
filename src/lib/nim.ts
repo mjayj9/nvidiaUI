@@ -74,7 +74,7 @@ export const chatWithNvidiaObject = async (
     }
 
     const endpoint = getApiEndpoint(model, "TEXT");
-    const res = await fetch(endpoint, {
+    let res = await fetch(endpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -83,6 +83,19 @@ export const chatWithNvidiaObject = async (
       body: JSON.stringify(bodyObj),
       signal: options?.abortSignal,
     });
+
+    if (res.status === 404) {
+      console.warn("Express backend chat proxy returned 404. Falling back to direct browser-to-NVIDIA API call.");
+      res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(bodyObj),
+        signal: options?.abortSignal,
+      });
+    }
 
     if (!res.ok) {
       const errorText = await res.text();

@@ -109,13 +109,48 @@ export default function VisionAnalyzer({ apiKey }: VisionAnalyzerProps) {
         }),
       });
 
-      if (!response.ok) {
+      let contentText = "";
+      if (response.status === 404) {
+        console.warn("Express backend vision analyzer proxy returned 404. Falling back to direct browser-to-NVIDIA API call.");
+        
+        const content: any[] = [{ type: "text", text: userPrompt }];
+        images.forEach((img) => {
+          content.push({
+            type: "image_url",
+            image_url: { url: img.base64 },
+          });
+        });
+
+        const directRes = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: activeModel,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content },
+            ],
+          }),
+        });
+
+        if (!directRes.ok) {
+          const errText = await directRes.text();
+          throw new Error(`Direct NVIDIA API failed: ${errText}`);
+        }
+
+        const directData = await directRes.json();
+        contentText = directData.choices[0].message.content;
+      } else if (!response.ok) {
         const errText = await response.text();
         throw new Error(errText);
+      } else {
+        const data = await response.json();
+        contentText = data.content;
       }
-
-      const data = await response.json();
-      setResult(data.content);
+      setResult(contentText);
     } catch (e: any) {
       console.error(e);
       setResult(`🚨 **Vision Analysis Error:**\n\n${e.message}`);

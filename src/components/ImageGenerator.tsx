@@ -53,12 +53,75 @@ export default function ImageGenerator({ apiKey }: ImageGeneratorProps) {
         }),
       });
 
-      if (!response.ok) {
+      let data;
+      if (response.status === 404) {
+        console.warn("Express backend image generation proxy returned 404. Falling back to direct browser-to-NVIDIA API call.");
+        
+        const lowerModel = activeModel.toLowerCase();
+        const parts = lowerModel.split("/");
+        const provider = parts[0];
+        const modelName = parts[1] || parts[0];
+        const invokeUrl = `https://ai.api.nvidia.com/v1/genai/${provider}/${modelName}`;
+
+        let width = 1024;
+        let height = 1024;
+        if (aspectRatio === "16:9") {
+          width = 1216;
+          height = 832;
+        } else if (aspectRatio === "9:16") {
+          width = 832;
+          height = 1216;
+        } else if (aspectRatio === "4:3") {
+          width = 1152;
+          height = 896;
+        } else if (aspectRatio === "3:4") {
+          width = 896;
+          height = 1152;
+        }
+
+        const payload: any = {
+          prompt,
+          seed: seed || Math.floor(Math.random() * 1000000),
+        };
+
+        if (lowerModel.includes("flux")) {
+          payload.width = width;
+          payload.height = height;
+          payload.steps = 4;
+        } else {
+          payload.width = width;
+          payload.height = height;
+          if (negativePrompt) payload.negative_prompt = negativePrompt;
+        }
+
+        const directRes = await fetch(invokeUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+            Accept: "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!directRes.ok) {
+          const errText = await directRes.text();
+          throw new Error(`Direct NVIDIA API failed: ${errText}`);
+        }
+
+        const directData = await directRes.json();
+        data = {
+          images: directData.data.map((item: any) => ({
+            url: `data:image/png;base64,${item.b64_json}`,
+            seed: item.seed || payload.seed,
+          }))
+        };
+      } else if (!response.ok) {
         const errorText = await response.text();
         throw new Error(errorText);
+      } else {
+        data = await response.json();
       }
-
-      const data = await response.json();
       
       const newImages: GeneratedImage[] = data.images.map((img: any) => ({
         id: Math.random().toString(36).substring(7),

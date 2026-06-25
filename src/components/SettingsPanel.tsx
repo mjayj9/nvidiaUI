@@ -69,11 +69,27 @@ export default function SettingsPanel({
     setTestMessage("");
 
     try {
-      const res = await fetch("/api/nim/models", {
+      let res = await fetch("/api/nim/models", {
         headers: {
           Authorization: `Bearer ${apiKey}`,
         },
       });
+
+      if (res.status === 404) {
+        console.warn("Express backend proxy returned 404. Validating API Key directly against NVIDIA Chat API.");
+        res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: "meta/llama-3.1-8b-instruct",
+            messages: [{ role: "user", content: "test" }],
+            max_tokens: 1,
+          }),
+        });
+      }
 
       if (res.ok) {
         setTestStatus("success");
