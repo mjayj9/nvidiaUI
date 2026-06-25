@@ -160,20 +160,52 @@ async function startServer() {
 
       const { model, prompt, negative_prompt, aspect_ratio, seed } = req.body;
 
-      const response = await fetch("https://integrate.api.nvidia.com/v1/images/generations", {
+      const lowerModel = model.toLowerCase();
+      const parts = lowerModel.split("/");
+      const provider = parts[0];
+      const modelName = parts[1] || parts[0];
+      
+      const invokeUrl = `https://ai.api.nvidia.com/v1/genai/${provider}/${modelName}`;
+
+      let width = 1024;
+      let height = 1024;
+      if (aspect_ratio === "16:9") {
+        width = 1216;
+        height = 832;
+      } else if (aspect_ratio === "9:16") {
+        width = 832;
+        height = 1216;
+      } else if (aspect_ratio === "4:3") {
+        width = 1152;
+        height = 896;
+      } else if (aspect_ratio === "3:4") {
+        width = 896;
+        height = 1152;
+      }
+
+      const payload: any = {
+        prompt,
+        seed: seed || Math.floor(Math.random() * 1000000),
+      };
+
+      if (lowerModel.includes("flux")) {
+        payload.width = width;
+        payload.height = height;
+        payload.steps = 4;
+      } else {
+        payload.width = width;
+        payload.height = height;
+        if (negative_prompt) payload.negative_prompt = negative_prompt;
+      }
+
+      const response = await fetch(invokeUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: apiKey,
           Accept: "application/json",
         },
-        body: JSON.stringify({
-          model,
-          prompt,
-          negative_prompt,
-          aspect_ratio,
-          seed,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
@@ -310,7 +342,7 @@ async function startServer() {
         },
         body: JSON.stringify({
           input: textChunks,
-          model: "nvidia/embeddings-nv-embed-v1",
+          model: "nvidia/nv-embed-v1",
           input_type: "passage",
           encoding_format: "float",
         }),
@@ -354,7 +386,7 @@ async function startServer() {
         },
         body: JSON.stringify({
           input: [query],
-          model: "nvidia/embeddings-nv-embed-v1",
+          model: "nvidia/nv-embed-v1",
           input_type: "query",
           encoding_format: "float",
         }),
@@ -394,7 +426,7 @@ async function startServer() {
       let rerankedResults = topCandidates.map((c, i) => ({ ...c, index: i, rerankScore: c.score }));
 
       try {
-        const rerankResponse = await fetch("https://integrate.api.nvidia.com/v1/reranking", {
+        const rerankResponse = await fetch("https://ai.api.nvidia.com/v1/retrieval/nvidia/reranking", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -403,18 +435,19 @@ async function startServer() {
           body: JSON.stringify({
             model: "nvidia/rerank-qa-mistral-4b",
             query: { text: query },
-            documents: topCandidates.map((c) => ({ text: c.text })),
+            passages: topCandidates.map((c) => ({ text: c.text })),
           }),
         });
 
         if (rerankResponse.ok) {
           const rerankData = await rerankResponse.json();
-          rerankedResults = rerankData.results.map((r: any) => {
+          const rankItems = rerankData.rankings || rerankData.results || [];
+          rerankedResults = rankItems.map((r: any) => {
             const candidate = topCandidates[r.index];
             return {
               ...candidate,
               index: r.index,
-              rerankScore: r.logit || r.score,
+              rerankScore: r.logit !== undefined ? r.logit : (r.score !== undefined ? r.score : 0),
             };
           });
           // Sort by rerank score

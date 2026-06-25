@@ -80,6 +80,7 @@ export default function Login({ onGuestLogin }: LoginProps) {
       }
 
       localStorage.setItem("nim_custom_firebase_config", JSON.stringify(parsedConfig));
+      localStorage.removeItem("nim_db_fallback_active");
       alert("Firebase 프로젝트 구성이 저장되었습니다. 페이지가 새로고침됩니다.");
       window.location.reload();
     } catch (err: any) {
@@ -90,6 +91,7 @@ export default function Login({ onGuestLogin }: LoginProps) {
   const handleResetConfig = () => {
     if (window.confirm("Firebase 프로젝트 구성을 기본값(focused-rig-vcf5x)으로 초기화하시겠습니까?")) {
       localStorage.removeItem("nim_custom_firebase_config");
+      localStorage.removeItem("nim_db_fallback_active");
       window.location.reload();
     }
   };

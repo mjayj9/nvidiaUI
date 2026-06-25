@@ -14,12 +14,19 @@ import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage, switchToDefaultDatabase } from "./firebase";
 import { ChatSession, Message, Attachment } from "../types";
 
-let isLocalFallbackActive = false;
+let isLocalFallbackActive = typeof window !== "undefined" && localStorage.getItem("nim_db_fallback_active") === "true";
 
 export const setLocalFallbackActive = (active: boolean) => {
   isLocalFallbackActive = active;
   if (active) {
     console.warn("Database fallback activated: operating in local-first localStorage mode.");
+    if (typeof window !== "undefined") {
+      localStorage.setItem("nim_db_fallback_active", "true");
+    }
+  } else {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("nim_db_fallback_active");
+    }
   }
 };
 
@@ -43,7 +50,7 @@ const promiseTimeout = <T>(promise: Promise<T>, ms: number, errorMsg: string): P
 
 const runWithDbFallback = async <T>(fn: () => Promise<T>, description = "Database request"): Promise<T> => {
   try {
-    return await promiseTimeout(fn(), 4000, description);
+    return await promiseTimeout(fn(), 1500, description);
   } catch (error: any) {
     const errorStr = String(error.message || error);
     if (
@@ -56,7 +63,7 @@ const runWithDbFallback = async <T>(fn: () => Promise<T>, description = "Databas
       console.warn(`Firestore database failed or timed out (${description}), switching database or falling back...`, error);
       switchToDefaultDatabase();
       try {
-        return await promiseTimeout(fn(), 4000, description + " (fallback)");
+        return await promiseTimeout(fn(), 1500, description + " (fallback)");
       } catch (fallbackError) {
         console.error(`Fallback database also failed/timed out (${description}):`, fallbackError);
         throw fallbackError;
@@ -65,6 +72,7 @@ const runWithDbFallback = async <T>(fn: () => Promise<T>, description = "Databas
     throw error;
   }
 };
+
 
 export const uploadFile = async (
   userId: string,
