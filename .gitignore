@@ -6,3 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
+rag_db.json
+safety_logs.json

@@ -11,6 +11,7 @@ import {
   BrainCircuit,
   Settings2,
   ChevronDown,
+  ChevronUp,
   ChevronRight,
   Loader2,
   Square,
@@ -23,6 +24,8 @@ import { getMessages, addMessage, uploadFile, updateSessionSettings, saveChatSna
 import { chatWithNvidiaObject, NimMetrics } from "../lib/nim";
 import { cn } from "../lib/utils";
 import { getModelType, hasThinkingMode, NIM_MODELS } from "../models";
+import { useWorkspace } from "../context/WorkspaceContext";
+import { useToast } from "../context/ToastContext";
 import CodeExportModal from "./CodeExportModal";
 import { Check, Copy } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -135,12 +138,41 @@ function MessageWithReasoning({ content }: { content: string }) {
 
   if (content.startsWith("ERROR_PAYLOAD:")) {
     const errorMsg = content.replace("ERROR_PAYLOAD:", "").trim();
+    
+    // Parse common errors to make it human-readable
+    let friendlyTitle = "요청 처리 중 오류가 발생했습니다.";
+    let friendlyDesc = "NVIDIA API 서버와의 통신 중 예외가 발생했습니다.";
+    
+    const lowerMsg = errorMsg.toLowerCase();
+    if (lowerMsg.includes("401") || lowerMsg.includes("unauthorized") || lowerMsg.includes("invalid api key")) {
+      friendlyTitle = "API Key 인증 실패 (401)";
+      friendlyDesc = "설정된 NVIDIA API Key가 올바르지 않거나 만료되었습니다. 우측 상단 Settings 메뉴에서 유효한 nvapi-... 키로 수정 후 다시 시도해 주세요.";
+    } else if (lowerMsg.includes("402") || lowerMsg.includes("quota") || lowerMsg.includes("limit") || lowerMsg.includes("payment")) {
+      friendlyTitle = "API 호출 한도 초과 (402/429)";
+      friendlyDesc = "현재 API Key의 크레딧이 부족하거나 NVIDIA 개발자 계정의 분당/일일 호출 한도(Quota)를 초과했습니다. NVIDIA 빌드 페이지에서 계정 상태를 확인해 주세요.";
+    } else if (lowerMsg.includes("404") || lowerMsg.includes("not found")) {
+      friendlyTitle = "요청 주소를 찾을 수 없음 (404)";
+      friendlyDesc = "호출하려는 AI 모델 엔드포인트를 찾을 수 없습니다. 모델 목록에서 다른 모델을 선택해 보시거나 API 연결 상태를 점검해 주세요.";
+    } else if (lowerMsg.includes("failed to fetch") || lowerMsg.includes("cors") || lowerMsg.includes("networkerror")) {
+      friendlyTitle = "네트워크 통신 오류 (CORS/Network)";
+      friendlyDesc = "로컬 컴퓨터나 Render 호스트 서버와의 연결이 원활하지 않습니다. Render에 정적 사이트(Static Site)가 아닌 프록시 백엔드가 포함된 'Web Service'로 올바르게 배포되었는지 확인해 주세요.";
+    }
+
     return (
-      <div className="p-4 bg-red-950/40 border border-red-500/50 rounded-lg text-red-200 mt-2 font-mono text-sm whitespace-pre-wrap flex flex-col gap-2 shadow-lg">
-        <div className="flex items-center gap-2 font-bold mb-1">
-          <span className="text-red-500 text-lg">🚨</span> API Error JSON
+      <div className="p-4 bg-red-950/20 border border-red-500/30 rounded-xl text-neutral-200 mt-2 text-xs flex flex-col gap-2.5 shadow-lg max-w-2xl w-full">
+        <div className="flex items-center gap-2 font-bold text-red-400">
+          <span className="text-sm">🚨</span> {friendlyTitle}
         </div>
-        <div>{errorMsg}</div>
+        <p className="text-neutral-400 leading-relaxed text-[11px]">{friendlyDesc}</p>
+        
+        <details className="mt-1 group border-t border-neutral-800/80 pt-2 cursor-pointer">
+          <summary className="text-[10px] text-neutral-500 font-bold uppercase tracking-wider select-none hover:text-neutral-300 transition-colors flex items-center gap-1">
+            <span>상세 오류 로그 보기 (Developer Payload)</span>
+          </summary>
+          <pre className="mt-2 p-3 bg-black/60 rounded-lg text-[10px] font-mono text-red-300/80 overflow-x-auto whitespace-pre-wrap leading-relaxed select-text border border-neutral-900">
+            {errorMsg}
+          </pre>
+        </details>
       </div>
     );
   }
@@ -154,10 +186,6 @@ function MessageWithReasoning({ content }: { content: string }) {
 
 interface ChatAreaProps {
   sessionId: string;
-  apiKey: string;
-  model: string;
-  sessions: ChatSession[];
-  onUpdateSessionTitle: (id: string, title: string) => void;
   userId: string;
   onToggleSessionSettings?: () => void;
   onToggleHistory?: () => void;
@@ -166,15 +194,14 @@ interface ChatAreaProps {
 
 export default function ChatArea({
   sessionId,
-  apiKey,
-  model,
-  sessions,
-  onUpdateSessionTitle,
   userId,
   onToggleSessionSettings,
   onToggleHistory,
   onForkSession,
 }: ChatAreaProps) {
+  const { apiKey, model, sessions, updateSessionTitle } = useWorkspace();
+  const { toast } = useToast();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -186,6 +213,12 @@ export default function ChatArea({
   const [abortController, setAbortController] = useState<AbortController | null>(null);
   const [lastMetrics, setLastMetrics] = useState<NimMetrics | null>(null);
   const [isCodeExportOpen, setIsCodeExportOpen] = useState(false);
+  const [isTelemetryExpanded, setIsTelemetryExpanded] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth >= 768;
+    }
+    return true;
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -313,7 +346,7 @@ export default function ChatArea({
 
       // Update title locally if it's the first message
       if (messages.length === 0) {
-        onUpdateSessionTitle(
+        updateSessionTitle(
           sessionId,
           userContent.substring(0, 30) || "Image Upload",
         );
@@ -478,19 +511,10 @@ export default function ChatArea({
               try {
                 const modelsUsed = Array.from(new Set(messages.map(m => m.model || currentSession?.model || "unknown")));
                 await saveChatSnapshot(userId, currentSession?.title || "Saved Chat", modelsUsed, messages);
-                
-                // Show success toast
-                const toast = document.createElement("div");
-                toast.className = "fixed bottom-4 right-4 bg-[#76b900] text-white px-4 py-2 rounded shadow-lg z-50 transition-opacity duration-300 font-medium text-sm flex items-center gap-2";
-                toast.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> 성공적으로 저장되었습니다`;
-                document.body.appendChild(toast);
-                setTimeout(() => {
-                  toast.style.opacity = "0";
-                  setTimeout(() => toast.remove(), 300);
-                }, 3000);
+                toast("성공적으로 저장되었습니다", "success");
               } catch (e) {
                 console.error("Failed to save chat", e);
-                alert("저장에 실패했습니다.");
+                toast("저장에 실패했습니다.", "error");
               }
             }} className="text-sm font-medium text-neutral-400 hover:text-white transition flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
@@ -540,58 +564,78 @@ export default function ChatArea({
         <div className="flex-1 overflow-y-auto px-4 md:px-8 pt-20 pb-6 w-full max-w-4xl mx-auto flex flex-col gap-6 scrollbar-thin scrollbar-thumb-neutral-800">
           
           {lastMetrics && (
-            <div className="w-full bg-[#111] border border-neutral-800 rounded-xl p-4 flex flex-col gap-4 text-xs font-mono text-neutral-400 mb-4">
-              <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 md:p-4 flex flex-col gap-3 md:gap-4 text-xs font-mono text-neutral-400 mb-4 transition-all">
+              <div 
+                className="flex items-center justify-between cursor-pointer select-none"
+                onClick={() => setIsTelemetryExpanded(!isTelemetryExpanded)}
+              >
                 <div className="flex items-center gap-2">
                   <Activity className="w-4 h-4 text-[#76b900]" />
-                  <span className="text-white">Telemetry</span>
-                </div>
-                <div className="flex gap-6">
-                  <div className="flex flex-col">
-                    <span className="text-neutral-500 uppercase text-[10px]">TTFT</span>
-                    <span className="text-white">{lastMetrics.ttft} ms</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-neutral-500 uppercase text-[10px]">TPS</span>
-                    <span className="text-white">{lastMetrics.tps}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-neutral-500 uppercase text-[10px]">Latency</span>
-                    <span className="text-white">{(lastMetrics.totalTime / 1000).toFixed(2)} s</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-neutral-500 uppercase text-[10px]">Tokens (Out)</span>
-                    <span className="text-white">{lastMetrics.tokens}</span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-neutral-500 uppercase text-[10px]">Est. Cost</span>
-                    <span className="text-white">${(((Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / 1000000) * 0.50).toFixed(6)}</span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex flex-col gap-1.5 w-full">
-                <div className="flex justify-between text-[10px] text-neutral-500 uppercase">
-                  <span>Context Window</span>
-                  <span>
-                    {Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens} / {currentSession?.maxTokens || 128000}
+                  <span className="text-white font-bold">Telemetry Metrics</span>
+                  <span className="text-[9px] text-neutral-500 bg-neutral-900 px-2 py-0.5 rounded border border-neutral-800 md:hidden">
+                    {isTelemetryExpanded ? "Tap to collapse" : "Tap to expand"}
                   </span>
                 </div>
-                <div className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
-                  <div 
-                    className={cn(
-                      "h-full transition-all duration-500", 
-                      (Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / (currentSession?.maxTokens || 128000) > 0.9 
-                        ? "bg-red-500" 
-                        : "bg-[#76b900]"
-                    )}
-                    style={{ width: `${Math.min(100, ((Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / (currentSession?.maxTokens || 128000)) * 100)}%` }}
-                  />
-                </div>
-                {(Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / (currentSession?.maxTokens || 128000) > 0.9 && (
-                  <span className="text-red-400 text-[10px] mt-0.5">Warning: Approaching context window limit.</span>
-                )}
+                <button className="text-neutral-500 hover:text-white transition-colors">
+                  {isTelemetryExpanded ? (
+                    <ChevronUp className="w-4 h-4" />
+                  ) : (
+                    <ChevronDown className="w-4 h-4" />
+                  )}
+                </button>
               </div>
+
+              {isTelemetryExpanded && (
+                <div className="flex flex-col gap-4 animate-in fade-in duration-200">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex flex-wrap gap-4 md:gap-6">
+                      <div className="flex flex-col">
+                        <span className="text-neutral-500 uppercase text-[10px]">TTFT</span>
+                        <span className="text-white">{lastMetrics.ttft} ms</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-neutral-500 uppercase text-[10px]">TPS</span>
+                        <span className="text-white">{lastMetrics.tps}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-neutral-500 uppercase text-[10px]">Latency</span>
+                        <span className="text-white">{(lastMetrics.totalTime / 1000).toFixed(2)} s</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-neutral-500 uppercase text-[10px]">Tokens (Out)</span>
+                        <span className="text-white">{lastMetrics.tokens}</span>
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-neutral-500 uppercase text-[10px]">Est. Cost</span>
+                        <span className="text-white">${(((Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / 1000000) * 0.50).toFixed(6)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col gap-1.5 w-full">
+                    <div className="flex justify-between text-[10px] text-neutral-500 uppercase">
+                      <span>Context Window</span>
+                      <span>
+                        {Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens} / {currentSession?.maxTokens || 128000}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                      <div 
+                        className={cn(
+                          "h-full transition-all duration-500", 
+                          (Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / (currentSession?.maxTokens || 128000) > 0.9 
+                            ? "bg-red-500" 
+                            : "bg-[#76b900]"
+                        )}
+                        style={{ width: `${Math.min(100, ((Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / (currentSession?.maxTokens || 128000)) * 100)}%` }}
+                      />
+                    </div>
+                    {(Math.round(JSON.stringify(messages).length / 4) + lastMetrics.tokens) / (currentSession?.maxTokens || 128000) > 0.9 && (
+                      <span className="text-red-400 text-[10px] mt-0.5">Warning: Approaching context window limit.</span>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

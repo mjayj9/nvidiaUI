@@ -1,34 +1,47 @@
 import { Activity, Database, Eye, Home, Image as ImageIcon, LogOut, MessageSquare, Mic, Plus, Server, ShieldAlert, Trash2, Video, X } from "lucide-react";
 import { User as FirebaseUser } from "firebase/auth";
-import { ChatSession } from "../types";
 import { signOut } from "../lib/firebase";
 import { cn } from "../lib/utils";
-
-interface SidebarProps {
-  isOpen: boolean;
-  setIsOpen: (open: boolean) => void;
-  sessions: ChatSession[];
-  activeSessionId: string | null;
-  onSelectSession: (id: string) => void;
-  onNewChat: () => void;
-  onDeleteSession: (id: string) => void;
-  user: FirebaseUser;
-  activeTab: string;
-  onSelectTab: (tab: string) => void;
-}
+import { useWorkspace } from "../context/WorkspaceContext";
 
 export default function Sidebar({
   isOpen,
   setIsOpen,
-  sessions,
-  activeSessionId,
-  onSelectSession,
-  onNewChat,
-  onDeleteSession,
   user,
-  activeTab,
-  onSelectTab,
-}: SidebarProps) {
+}: {
+  isOpen: boolean;
+  setIsOpen: (open: boolean) => void;
+  user: FirebaseUser;
+}) {
+  const {
+    sessions,
+    activeSessionId,
+    activeTab,
+    setActiveTab,
+    setActiveSessionId,
+    handleNewChat,
+    handleDeleteSession,
+  } = useWorkspace();
+
+  const onSelectSession = (id: string) => {
+    setActiveSessionId(id);
+    setActiveTab("chat");
+    if (window.innerWidth < 768) setIsOpen(false);
+  };
+
+  const onSelectTab = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === "chat" && !activeSessionId) {
+      if (sessions.length > 0) {
+        setActiveSessionId(sessions[0].id);
+      } else {
+        handleNewChat();
+      }
+    }
+    if (window.innerWidth < 768 && tab !== "chat") {
+      setIsOpen(false);
+    }
+  };
   const handleSignOut = () => {
     signOut().catch(console.error);
   };
@@ -92,7 +105,7 @@ export default function Sidebar({
               {item.id === "chat" && activeTab === "chat" && (
                 <div className="pl-4 pr-1 py-1 space-y-1 animate-in fade-in duration-200 border-l border-neutral-900 ml-5 mt-1">
                   <button
-                    onClick={onNewChat}
+                    onClick={handleNewChat}
                     className="w-full flex items-center gap-2 px-2 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-white rounded text-[10px] font-semibold transition mb-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -114,7 +127,7 @@ export default function Sidebar({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            onDeleteSession(session.id);
+                            handleDeleteSession(session.id);
                           }}
                           className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-red-400 transition"
                         >

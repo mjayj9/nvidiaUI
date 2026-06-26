@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { User as FirebaseUser } from "firebase/auth";
 import Sidebar from "./Sidebar";
 import ChatArea from "./ChatArea";
@@ -12,150 +12,35 @@ import VideoStudio from "./VideoStudio";
 import SafetyGuard from "./SafetyGuard";
 import ActivityLogs from "./ActivityLogs";
 import SettingsPanel from "./SettingsPanel";
-import { ChatSession } from "../types";
-import {
-  getChatSessions,
-  createChatSession,
-  deleteChatSession,
-  forkSession,
-  getUserSettings,
-  saveUserSettings,
-} from "../lib/api";
+import { getChatSessions, forkSession } from "../lib/api";
 import { Loader2, Menu } from "lucide-react";
-import { modelRegistry } from "../lib/modelRegistry";
+import { WorkspaceProvider, useWorkspace } from "../context/WorkspaceContext";
+import { ToastProvider } from "../context/ToastContext";
 
 interface DashboardProps {
   user: FirebaseUser;
 }
 
-export default function Dashboard({ user }: DashboardProps) {
-  const [sessions, setSessions] = useState<ChatSession[]>([]);
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+function DashboardContent({ user }: DashboardProps) {
+  const {
+    model,
+    sessions,
+    activeSessionId,
+    activeTab,
+    setActiveTab,
+    setActiveSessionId,
+    updateSessionsList,
+  } = useWorkspace();
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSessionSettingsOpen, setIsSessionSettingsOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("dashboard");
 
-  const [apiKey, setApiKey] = useState(
-    () => localStorage.getItem("nim_api_key") || "",
-  );
-  const [model, setModel] = useState(() => {
-    const saved = localStorage.getItem("nim_model");
-    if (saved === "meta/llama3-70b-instruct" || saved === "llama-3.1-70b-instruct")
-      return "meta/llama-3.1-70b-instruct";
-
-    if (saved && !modelRegistry.some((m) => m.id === saved)) {
-      return "meta/llama-3.1-70b-instruct";
+  const getSessionModel = (sessionId: string) => {
+    let sessionModel = sessions.find((s) => s.id === sessionId)?.model || model;
+    if (sessionModel === "meta/llama3-70b-instruct" || sessionModel === "llama-3.1-70b-instruct") {
+      sessionModel = "meta/llama-3.1-70b-instruct";
     }
-
-    return saved || "meta/llama-3.1-70b-instruct";
-  });
-
-  const loadSessions = async () => {
-    try {
-      const loadedSessions = await getChatSessions(user.uid);
-      setSessions(loadedSessions);
-      if (loadedSessions.length > 0 && !activeSessionId) {
-        setActiveSessionId(loadedSessions[0].id);
-      } else if (loadedSessions.length === 0) {
-        handleNewChat();
-      }
-    } catch (error) {
-      console.error("Error loading sessions", error);
-    }
-  };
-
-  const loadSettingsAndSessions = async () => {
-    if (user.uid !== "nvidia-guest-dev") {
-      try {
-        const settings = await getUserSettings(user.uid);
-        if (settings) {
-          if (settings.apiKey) {
-            localStorage.setItem("nim_api_key", settings.apiKey);
-            setApiKey(settings.apiKey);
-          }
-          if (settings.ngcKey) {
-            localStorage.setItem("ngc_api_key", settings.ngcKey);
-          }
-          if (settings.selfHostedBase) {
-            localStorage.setItem("self_hosted_nim_base_url", settings.selfHostedBase);
-          }
-          if (settings.selectedModel) {
-            localStorage.setItem("nim_model", settings.selectedModel);
-            setModel(settings.selectedModel);
-          }
-        }
-      } catch (error) {
-        console.error("Error loading user settings", error);
-      }
-    }
-    await loadSessions();
-  };
-
-  useEffect(() => {
-    loadSettingsAndSessions();
-  }, [user.uid]);
-
-  const handleNewChat = async () => {
-    try {
-      const newId = await createChatSession(user.uid, "New Chat", model);
-      const newSession: ChatSession = {
-        id: newId,
-        userId: user.uid,
-        title: "New Chat",
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        model: model,
-      };
-      setSessions([newSession, ...sessions]);
-      setActiveSessionId(newId);
-      if (window.innerWidth < 768) {
-        setIsSidebarOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to create new chat", error);
-    }
-  };
-
-  const handleDeleteSession = async (id: string) => {
-    try {
-      await deleteChatSession(id);
-      setSessions(sessions.filter((s) => s.id !== id));
-      if (activeSessionId === id) {
-        setActiveSessionId(sessions.find((s) => s.id !== id)?.id || null);
-        if (sessions.length <= 1) {
-          handleNewChat();
-        }
-      }
-    } catch (error) {
-      console.error("Failed to delete session", error);
-    }
-  };
-
-  const syncSettingsToFirestore = (updatedKey?: string, updatedModel?: string) => {
-    if (user.uid === "nvidia-guest-dev") return;
-    const finalKey = updatedKey !== undefined ? updatedKey : apiKey;
-    const finalModel = updatedModel !== undefined ? updatedModel : model;
-    const ngcKey = localStorage.getItem("ngc_api_key") || "";
-    const selfHostedBase = localStorage.getItem("self_hosted_nim_base_url") || "";
-    
-    saveUserSettings(user.uid, {
-      apiKey: finalKey,
-      ngcKey,
-      selfHostedBase,
-      selectedModel: finalModel,
-    }).catch(err => console.error("Failed to sync settings to Firestore", err));
-  };
-
-  const updateApiKey = (key: string) => {
-    localStorage.setItem("nim_api_key", key);
-    setApiKey(key);
-    syncSettingsToFirestore(key, model);
-  };
-
-  const updateModel = (m: string) => {
-    localStorage.setItem("nim_model", m);
-    setModel(m);
-    syncSettingsToFirestore(apiKey, m);
+    return sessionModel;
   };
 
   const handleForkSession = async (messageTimestamp: number) => {
@@ -166,29 +51,19 @@ export default function Dashboard({ user }: DashboardProps) {
         messageTimestamp,
         getSessionModel(activeSessionId),
       );
-      await loadSessions();
+      const loadedSessions = await getChatSessions(user.uid);
+      updateSessionsList(loadedSessions);
       setActiveSessionId(newSessionId);
     } catch (e) {
       console.error("Fork failed", e);
     }
   };
 
-  const getSessionModel = (sessionId: string) => {
-    let sessionModel = sessions.find((s) => s.id === sessionId)?.model || model;
-    if (sessionModel === "meta/llama3-70b-instruct" || sessionModel === "llama-3.1-70b-instruct") {
-      sessionModel = "meta/llama-3.1-70b-instruct";
-    }
-    return sessionModel;
-  };
-
-  // Switch workspace content depending on activeTab
   const renderTabContent = () => {
     switch (activeTab) {
       case "dashboard":
         return (
           <DashboardOverview
-            apiKey={apiKey}
-            selectedModel={model}
             onNavigate={(tab) => {
               setActiveTab(tab);
               if (tab === "chat" && !activeSessionId && sessions.length > 0) {
@@ -201,14 +76,6 @@ export default function Dashboard({ user }: DashboardProps) {
         return activeSessionId ? (
           <ChatArea
             sessionId={activeSessionId}
-            apiKey={apiKey}
-            model={getSessionModel(activeSessionId)}
-            sessions={sessions}
-            onUpdateSessionTitle={(id, title) => {
-              setSessions(
-                sessions.map((s) => (s.id === id ? { ...s, title } : s)),
-              );
-            }}
             userId={user.uid}
             onToggleSessionSettings={() =>
               setIsSessionSettingsOpen(!isSessionSettingsOpen)
@@ -223,28 +90,21 @@ export default function Dashboard({ user }: DashboardProps) {
           </div>
         );
       case "rag":
-        return <DocumentSearch apiKey={apiKey} />;
+        return <DocumentSearch />;
       case "vision":
-        return <VisionAnalyzer apiKey={apiKey} />;
+        return <VisionAnalyzer />;
       case "image-gen":
-        return <ImageGenerator apiKey={apiKey} />;
+        return <ImageGenerator />;
       case "speech":
-        return <SpeechHub apiKey={apiKey} />;
+        return <SpeechHub />;
       case "video":
-        return <VideoStudio apiKey={apiKey} />;
+        return <VideoStudio />;
       case "safety":
-        return <SafetyGuard apiKey={apiKey} />;
+        return <SafetyGuard />;
       case "logs":
         return <ActivityLogs />;
       case "settings":
-        return (
-          <SettingsPanel
-            apiKey={apiKey}
-            onUpdateApiKey={updateApiKey}
-            selectedModel={model}
-            onUpdateModel={updateModel}
-          />
-        );
+        return <SettingsPanel />;
       default:
         return (
           <div className="flex-1 flex items-center justify-center bg-neutral-950 text-neutral-500 text-xs">
@@ -270,30 +130,7 @@ export default function Dashboard({ user }: DashboardProps) {
       <Sidebar
         isOpen={isSidebarOpen}
         setIsOpen={setIsSidebarOpen}
-        sessions={sessions}
-        activeSessionId={activeSessionId}
-        onSelectSession={(id) => {
-          setActiveSessionId(id);
-          setActiveTab("chat");
-          if (window.innerWidth < 768) setIsSidebarOpen(false);
-        }}
-        onNewChat={handleNewChat}
-        onDeleteSession={handleDeleteSession}
         user={user}
-        activeTab={activeTab}
-        onSelectTab={(tab) => {
-          setActiveTab(tab);
-          if (tab === "chat" && !activeSessionId) {
-            if (sessions.length > 0) {
-              setActiveSessionId(sessions[0].id);
-            } else {
-              handleNewChat();
-            }
-          }
-          if (window.innerWidth < 768 && tab !== "chat") {
-            setIsSidebarOpen(false);
-          }
-        }}
       />
 
       {/* Main Workspace Frame */}
@@ -307,7 +144,7 @@ export default function Dashboard({ user }: DashboardProps) {
             isOpen={isSessionSettingsOpen}
             onClose={() => setIsSessionSettingsOpen(false)}
             onUpdate={(id, updates) => {
-              setSessions(
+              updateSessionsList(
                 sessions.map((s) => (s.id === id ? { ...s, ...updates } : s)),
               );
             }}
@@ -318,3 +155,12 @@ export default function Dashboard({ user }: DashboardProps) {
   );
 }
 
+export default function Dashboard({ user }: DashboardProps) {
+  return (
+    <WorkspaceProvider user={user}>
+      <ToastProvider>
+        <DashboardContent user={user} />
+      </ToastProvider>
+    </WorkspaceProvider>
+  );
+}

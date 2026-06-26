@@ -1,9 +1,6 @@
 import { Activity, AlertTriangle, CheckCircle, Database, EyeOff, Loader2, Play, ShieldAlert, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
-
-interface SafetyGuardProps {
-  apiKey: string;
-}
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface AuditLog {
   id: string;
@@ -17,7 +14,8 @@ interface AuditLog {
   output: string;
 }
 
-export default function SafetyGuard({ apiKey }: SafetyGuardProps) {
+export default function SafetyGuard() {
+  const { apiKey } = useWorkspace();
   const [activeSubTab, setActiveSubTab] = useState<"pipeline" | "logs">("pipeline");
   const [inputText, setInputText] = useState("");
   const [pipelineIsLoading, setPipelineIsLoading] = useState(false);

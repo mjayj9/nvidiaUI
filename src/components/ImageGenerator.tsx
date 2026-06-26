@@ -1,10 +1,7 @@
 import { Download, ImageIcon, Loader2, Play, RefreshCw, Sparkles, X, ZoomIn } from "lucide-react";
 import { useState } from "react";
 import { modelRegistry } from "../lib/modelRegistry";
-
-interface ImageGeneratorProps {
-  apiKey: string;
-}
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface GeneratedImage {
   id: string;
@@ -14,7 +11,8 @@ interface GeneratedImage {
   seed: number;
 }
 
-export default function ImageGenerator({ apiKey }: ImageGeneratorProps) {
+export default function ImageGenerator() {
+  const { apiKey } = useWorkspace();
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [activeModel, setActiveModel] = useState("black-forest-labs/FLUX.1-schnell");

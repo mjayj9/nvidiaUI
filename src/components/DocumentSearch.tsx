@@ -1,10 +1,7 @@
 import { Activity, AlertCircle, BookOpen, CheckCircle, Database, FileText, Loader2, Send, UploadCloud, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
-
-interface DocumentSearchProps {
-  apiKey: string;
-}
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface DocItem {
   id: string;
@@ -24,7 +21,8 @@ interface Citation {
   index: number;
 }
 
-export default function DocumentSearch({ apiKey }: DocumentSearchProps) {
+export default function DocumentSearch() {
+  const { apiKey } = useWorkspace();
   const [documents, setDocuments] = useState<DocItem[]>([]);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);

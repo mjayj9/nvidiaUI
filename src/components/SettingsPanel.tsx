@@ -1,24 +1,21 @@
 import { Activity, Check, CheckCircle2, Cpu, ExternalLink, Key, Loader2, Play, Plus, Server, Tag, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { modelRegistry, ModelRegistryItem } from "../lib/modelRegistry";
+import { useWorkspace } from "../context/WorkspaceContext";
+import { useToast } from "../context/ToastContext";
 
-interface SettingsPanelProps {
-  apiKey: string;
-  onUpdateApiKey: (key: string) => void;
-  selectedModel: string;
-  onUpdateModel: (model: string) => void;
-}
+export default function SettingsPanel() {
+  const { apiKey: contextKey, updateApiKey, model: selectedModel, updateModel } = useWorkspace();
+  const { toast } = useToast();
 
-export default function SettingsPanel({
-  apiKey: initialKey,
-  onUpdateApiKey,
-  selectedModel,
-  onUpdateModel,
-}: SettingsPanelProps) {
-  const [apiKey, setApiKey] = useState(initialKey);
+  const [apiKey, setApiKey] = useState(contextKey);
   const [ngcKey, setNgcKey] = useState(() => localStorage.getItem("ngc_api_key") || "");
   const [selfHostedBase, setSelfHostedBase] = useState(() => localStorage.getItem("self_hosted_nim_base_url") || "");
   
+  useEffect(() => {
+    setApiKey(contextKey);
+  }, [contextKey]);
+
   const [testStatus, setTestStatus] = useState<"idle" | "testing" | "success" | "failed">("idle");
   const [testMessage, setTestMessage] = useState("");
 
@@ -47,17 +44,8 @@ export default function SettingsPanel({
   const saveApiSettings = () => {
     localStorage.setItem("ngc_api_key", ngcKey);
     localStorage.setItem("self_hosted_nim_base_url", selfHostedBase);
-    onUpdateApiKey(apiKey);
-
-    // Show saved notification toast
-    const toast = document.createElement("div");
-    toast.className = "fixed bottom-4 right-4 bg-green-600 text-white px-4 py-2.5 rounded-lg shadow-lg z-50 text-xs font-semibold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-4";
-    toast.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Settings updated successfully`;
-    document.body.appendChild(toast);
-    setTimeout(() => {
-      toast.style.opacity = "0";
-      setTimeout(() => toast.remove(), 350);
-    }, 2500);
+    updateApiKey(apiKey);
+    toast("Settings updated successfully", "success");
   };
 
   const testConnection = async () => {

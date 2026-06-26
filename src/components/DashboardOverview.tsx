@@ -1,17 +1,15 @@
 import { ArrowRight, Bot, Cpu, Database, Eye, Image as ImageIcon, MessageSquare, Mic, ShieldAlert, Sparkles, Video } from "lucide-react";
 import { modelRegistry } from "../lib/modelRegistry";
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface DashboardOverviewProps {
-  apiKey: string;
   onNavigate: (tab: string) => void;
-  selectedModel: string;
 }
 
 export default function DashboardOverview({
-  apiKey,
   onNavigate,
-  selectedModel,
 }: DashboardOverviewProps) {
+  const { apiKey, model: selectedModel } = useWorkspace();
   const isConnected = !!apiKey;
   const totalModels = modelRegistry.length;
 

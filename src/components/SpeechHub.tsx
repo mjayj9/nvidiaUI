@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle, Download, Loader2, Mic, MicOff, Music, Play, Volume2, X } from "lucide-react";
 import { useState, useRef } from "react";
+import { useWorkspace } from "../context/WorkspaceContext";
 
 function createSineWaveWavBlob(duration = 2, freq = 440, sampleRate = 16000) {
   const numChannels = 1;
@@ -45,11 +46,8 @@ function createSineWaveWavBlob(duration = 2, freq = 440, sampleRate = 16000) {
   return new Blob([buffer], { type: "audio/wav" });
 }
 
-interface SpeechHubProps {
-  apiKey: string;
-}
-
-export default function SpeechHub({ apiKey }: SpeechHubProps) {
+export default function SpeechHub() {
+  const { apiKey } = useWorkspace();
   const [activeSubTab, setActiveSubTab] = useState<"asr" | "tts" | "bnr">("asr");
 
   // ASR State

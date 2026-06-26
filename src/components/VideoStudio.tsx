@@ -2,12 +2,10 @@ import { AlertCircle, CheckCircle, Download, FileText, Loader2, Play, Video, X }
 import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { modelRegistry } from "../lib/modelRegistry";
+import { useWorkspace } from "../context/WorkspaceContext";
 
-interface VideoStudioProps {
-  apiKey: string;
-}
-
-export default function VideoStudio({ apiKey }: VideoStudioProps) {
+export default function VideoStudio() {
+  const { apiKey } = useWorkspace();
   const [activeSubTab, setActiveSubTab] = useState<"understanding" | "synthetic">("understanding");
 
   // Common State

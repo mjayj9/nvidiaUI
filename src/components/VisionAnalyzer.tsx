@@ -2,10 +2,7 @@ import { Check, Clipboard, Download, Eye, ImageIcon, Loader2, Play, Trash2, Uplo
 import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { modelRegistry } from "../lib/modelRegistry";
-
-interface VisionAnalyzerProps {
-  apiKey: string;
-}
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface ImageFile {
   id: string;
@@ -13,7 +10,8 @@ interface ImageFile {
   base64: string;
 }
 
-export default function VisionAnalyzer({ apiKey }: VisionAnalyzerProps) {
+export default function VisionAnalyzer() {
+  const { apiKey } = useWorkspace();
   const [images, setImages] = useState<ImageFile[]>([]);
   const [prompt, setPrompt] = useState("");
   const [activeModel, setActiveModel] = useState("qwen/qwen3.5-397b-a17b");
