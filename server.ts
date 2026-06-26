@@ -227,10 +227,20 @@ async function startServer() {
 
       const data = await response.json();
       // Translate response to client gallery format
-      const images = data.data.map((img: any) => ({
-        url: img.url || `data:image/png;base64,${img.b64_json}`,
-        seed: seed,
-      }));
+      let images: any[] = [];
+      if (data.artifacts && Array.isArray(data.artifacts)) {
+        images = data.artifacts.map((img: any) => ({
+          url: `data:image/png;base64,${img.base64}`,
+          seed: img.seed || seed,
+        }));
+      } else if (data.data && Array.isArray(data.data)) {
+        images = data.data.map((img: any) => ({
+          url: img.url || `data:image/png;base64,${img.b64_json}`,
+          seed: img.seed || seed,
+        }));
+      } else {
+        throw new Error(`Unexpected image API response format: ${JSON.stringify(data).slice(0, 200)}`);
+      }
       res.json({ images });
     } catch (e: any) {
       // Fallback placeholder image when key is inactive

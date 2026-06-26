@@ -110,14 +110,23 @@ export default function ImageGenerator() {
         const directText = await directRes.text();
         try {
           const directData = JSON.parse(directText);
-          data = {
-            images: directData.data.map((item: any) => ({
-              url: `data:image/png;base64,${item.b64_json}`,
+          let parsedImages: any[] = [];
+          if (directData.artifacts && Array.isArray(directData.artifacts)) {
+            parsedImages = directData.artifacts.map((item: any) => ({
+              url: `data:image/png;base64,${item.base64}`,
               seed: item.seed || payload.seed,
-            }))
-          };
+            }));
+          } else if (directData.data && Array.isArray(directData.data)) {
+            parsedImages = directData.data.map((item: any) => ({
+              url: item.url || `data:image/png;base64,${item.b64_json}`,
+              seed: item.seed || payload.seed,
+            }));
+          } else {
+            throw new Error("Unexpected format");
+          }
+          data = { images: parsedImages };
         } catch (err) {
-          throw new Error(`Invalid JSON response from direct API: ${directText.slice(0, 100)}`);
+          throw new Error(`Invalid JSON response or format from direct API: ${directText.slice(0, 100)}`);
         }
       } else if (!response.ok) {
         const errorText = await response.text();
