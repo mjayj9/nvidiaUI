@@ -1,6 +1,7 @@
 import { Activity, AlertCircle, BookOpen, CheckCircle, Database, FileText, Loader2, Send, UploadCloud, X } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useWorkspace } from "../context/WorkspaceContext";
 
 interface DocItem {
@@ -568,7 +569,7 @@ ${contextText}`;
                     </div>
                   ) : (
                     <div className="markdown-body">
-                      <ReactMarkdown>{answer}</ReactMarkdown>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{answer}</ReactMarkdown>
                     </div>
                   )}
                 </div>

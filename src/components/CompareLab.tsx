@@ -6,6 +6,7 @@ import { Play, Cpu, Trash2, Plus, Table, Zap, Clock, Award, Loader2, Sparkles } 
 import { useToast } from "../context/ToastContext";
 import { cn } from "../lib/utils";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ModelComparisonState {
   modelId: string;
@@ -285,7 +286,7 @@ export default function CompareLab() {
                         {c.error}
                       </div>
                     ) : c.response ? (
-                      <Markdown>{c.response}</Markdown>
+                      <Markdown remarkPlugins={[remarkGfm]}>{c.response}</Markdown>
                     ) : c.isGenerating ? (
                       <div className="flex items-center gap-2 text-neutral-500 text-xs italic font-medium">
                         <Loader2 className="w-3.5 h-3.5 animate-spin text-[#76b900]" />

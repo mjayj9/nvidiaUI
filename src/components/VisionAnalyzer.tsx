@@ -1,6 +1,7 @@
 import { Check, Clipboard, Download, Eye, ImageIcon, Loader2, Play, Trash2, UploadCloud, X } from "lucide-react";
 import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { modelRegistry } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
 
@@ -372,7 +373,7 @@ export default function VisionAnalyzer() {
               </div>
             ) : (
               <div className="markdown-body">
-                <ReactMarkdown>{result}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{result}</ReactMarkdown>
               </div>
             )}
           </div>

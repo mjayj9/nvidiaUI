@@ -6,6 +6,7 @@ import { Swords, Eye, Award, RefreshCw, BarChart2, Loader2, Award as TrophyIcon 
 import { useToast } from "../context/ToastContext";
 import { cn } from "../lib/utils";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ArenaModelState {
   modelId: string;
@@ -293,7 +294,7 @@ export default function TournamentArena() {
                       {modelA.error}
                     </div>
                   ) : modelA.response ? (
-                    <Markdown>{modelA.response}</Markdown>
+                    <Markdown remarkPlugins={[remarkGfm]}>{modelA.response}</Markdown>
                   ) : modelA.isGenerating ? (
                     <div className="flex items-center gap-2 text-neutral-500 text-xs italic font-medium">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-[#76b900]" />
@@ -336,7 +337,7 @@ export default function TournamentArena() {
                       {modelB.error}
                     </div>
                   ) : modelB.response ? (
-                    <Markdown>{modelB.response}</Markdown>
+                    <Markdown remarkPlugins={[remarkGfm]}>{modelB.response}</Markdown>
                   ) : modelB.isGenerating ? (
                     <div className="flex items-center gap-2 text-neutral-500 text-xs italic font-medium">
                       <Loader2 className="w-3.5 h-3.5 animate-spin text-[#76b900]" />

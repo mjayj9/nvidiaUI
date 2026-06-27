@@ -20,6 +20,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Message, ChatSession, Attachment } from "../types";
 import { getMessages, addMessage, uploadFile, updateSessionSettings, saveChatSnapshot } from "../lib/api";
 import { chatWithNvidiaObject, NimMetrics } from "../lib/nim";
@@ -107,7 +108,7 @@ function MessageWithReasoning({ content }: { content: string }) {
 
         {restContent && (
           <div className="markdown-body mt-2">
-            <Markdown components={{ code: CodeBlock as any }}>{restContent}</Markdown>
+            <Markdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock as any }}>{restContent}</Markdown>
           </div>
         )}
       </div>
@@ -180,7 +181,7 @@ function MessageWithReasoning({ content }: { content: string }) {
 
   return (
     <div className="markdown-body">
-      <Markdown components={{ code: CodeBlock as any }}>{content}</Markdown>
+      <Markdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock as any }}>{content}</Markdown>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { AlertCircle, CheckCircle, Download, FileText, Loader2, Play, Video, X } from "lucide-react";
 import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { modelRegistry } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
 
@@ -343,7 +344,7 @@ export default function VideoStudio() {
                   </div>
                 ) : (
                   <div className="markdown-body">
-                    <ReactMarkdown>{undResult}</ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{undResult}</ReactMarkdown>
                   </div>
                 )}
               </>
