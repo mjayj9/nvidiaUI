@@ -177,7 +177,12 @@ async function startServer() {
       const provider = parts[0];
       const modelName = parts[1] || parts[0];
       
-      const invokeUrl = `https://ai.api.nvidia.com/v1/genai/${provider}/${modelName}`;
+      let finalModelName = modelName;
+      if (modelName === "sdxl") {
+        finalModelName = "stable-diffusion-xl";
+      }
+      
+      const invokeUrl = `https://ai.api.nvidia.com/v1/genai/${provider}/${finalModelName}`;
 
       let width = 1024;
       let height = 1024;
@@ -195,19 +200,32 @@ async function startServer() {
         height = 1152;
       }
 
-      const payload: any = {
-        prompt,
-        seed: seed || Math.floor(Math.random() * 1000000),
-      };
-
-      if (lowerModel.includes("flux")) {
-        payload.width = width;
-        payload.height = height;
-        payload.steps = 4;
+      let payload: any = {};
+      if (lowerModel.includes("stabilityai")) {
+        payload = {
+          text_prompts: [{ text: prompt }],
+          seed: seed || Math.floor(Math.random() * 1000000),
+          width: width,
+          height: height,
+        };
+        if (negative_prompt) {
+          payload.text_prompts.push({ text: negative_prompt, weight: -1.0 });
+        }
+      } else if (lowerModel.includes("flux")) {
+        payload = {
+          prompt,
+          seed: seed || Math.floor(Math.random() * 1000000),
+          width: width,
+          height: height,
+          steps: 4,
+        };
       } else {
-        payload.width = width;
-        payload.height = height;
-        if (negative_prompt) payload.negative_prompt = negative_prompt;
+        payload = {
+          prompt,
+          seed: seed || Math.floor(Math.random() * 1000000),
+          width: width,
+          height: height,
+        };
       }
 
       const response = await fetch(invokeUrl, {
@@ -243,16 +261,8 @@ async function startServer() {
       }
       res.json({ images });
     } catch (e: any) {
-      // Fallback placeholder image when key is inactive
-      console.warn("Real image generation failed, returning high-quality placeholder", e);
-      res.json({
-        images: [
-          {
-            url: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=600",
-            seed: req.body.seed || 42,
-          },
-        ],
-      });
+      console.error("Real image generation failed:", e);
+      res.status(500).json({ error: e.message || "Failed to generate image" });
     }
   });
 

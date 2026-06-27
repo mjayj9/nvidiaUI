@@ -59,7 +59,12 @@ export default function ImageGenerator() {
         const parts = lowerModel.split("/");
         const provider = parts[0];
         const modelName = parts[1] || parts[0];
-        const invokeUrl = `https://ai.api.nvidia.com/v1/genai/${provider}/${modelName}`;
+        
+        let finalModelName = modelName;
+        if (modelName === "sdxl") {
+          finalModelName = "stable-diffusion-xl";
+        }
+        const invokeUrl = `https://ai.api.nvidia.com/v1/genai/${provider}/${finalModelName}`;
 
         let width = 1024;
         let height = 1024;
@@ -77,19 +82,32 @@ export default function ImageGenerator() {
           height = 1152;
         }
 
-        const payload: any = {
-          prompt,
-          seed: seed || Math.floor(Math.random() * 1000000),
-        };
-
-        if (lowerModel.includes("flux")) {
-          payload.width = width;
-          payload.height = height;
-          payload.steps = 4;
+        let payload: any = {};
+        if (lowerModel.includes("stabilityai")) {
+          payload = {
+            text_prompts: [{ text: prompt }],
+            seed: seed || Math.floor(Math.random() * 1000000),
+            width: width,
+            height: height,
+          };
+          if (negativePrompt) {
+            payload.text_prompts.push({ text: negativePrompt, weight: -1.0 });
+          }
+        } else if (lowerModel.includes("flux")) {
+          payload = {
+            prompt,
+            seed: seed || Math.floor(Math.random() * 1000000),
+            width: width,
+            height: height,
+            steps: 4,
+          };
         } else {
-          payload.width = width;
-          payload.height = height;
-          if (negativePrompt) payload.negative_prompt = negativePrompt;
+          payload = {
+            prompt,
+            seed: seed || Math.floor(Math.random() * 1000000),
+            width: width,
+            height: height,
+          };
         }
 
         const directRes = await fetch(invokeUrl, {
@@ -151,19 +169,54 @@ export default function ImageGenerator() {
       setGallery((prev) => [...newImages, ...prev]);
     } catch (e: any) {
       console.error(e);
-      alert(`Image Generation Failed: ${e.message}`);
+      let errorMsg = e.message;
+      try {
+        const json = JSON.parse(e.message);
+        if (json.error) {
+          errorMsg = json.error;
+          try {
+            const innerJson = JSON.parse(json.error);
+            if (innerJson.detail) errorMsg = innerJson.detail;
+          } catch(e) {}
+        }
+      } catch (err) {}
+      
+      if (errorMsg.includes("Not found for account") || errorMsg.includes("Function") || errorMsg.includes("404")) {
+        alert(`Image Generation Failed: ${errorMsg}\n\n[도움말] 사용하신 API Key 계정에 해당 모델(Stable Diffusion 등)의 권한이 없거나 모델이 만료되었습니다. build.nvidia.com에서 라이선스 동의를 마쳤는지 확인하시거나, 별도 동의 없이 즉시 무료로 사용 가능한 'FLUX.1 Schnell' 모델을 선택해 보세요.`);
+      } else {
+        alert(`Image Generation Failed: ${errorMsg}`);
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleDownload = (img: GeneratedImage) => {
-    const a = document.createElement("a");
-    a.href = img.url;
-    a.download = `generation_${img.id}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const handleDownload = async (img: GeneratedImage) => {
+    try {
+      if (img.url.startsWith("data:")) {
+        const a = document.createElement("a");
+        a.href = img.url;
+        a.download = `generation_${img.id}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      } else {
+        // Fetch remote URL as blob to bypass CORS download blocks
+        const res = await fetch(img.url);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = `generation_${img.id}.png`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(blobUrl);
+      }
+    } catch (err) {
+      console.error("Failed to download image", err);
+      window.open(img.url, "_blank");
+    }
   };
 
   const handleReusePrompt = (img: GeneratedImage) => {
