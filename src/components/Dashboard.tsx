@@ -12,6 +12,8 @@ import VideoStudio from "./VideoStudio";
 import SafetyGuard from "./SafetyGuard";
 import ActivityLogs from "./ActivityLogs";
 import SettingsPanel from "./SettingsPanel";
+import CompareLab from "./CompareLab";
+import TournamentArena from "./TournamentArena";
 import { getChatSessions, forkSession } from "../lib/api";
 import { Loader2, Menu } from "lucide-react";
 import { WorkspaceProvider, useWorkspace } from "../context/WorkspaceContext";
@@ -103,6 +105,10 @@ function DashboardContent({ user }: DashboardProps) {
         return <SafetyGuard />;
       case "logs":
         return <ActivityLogs />;
+      case "compare-lab":
+        return <CompareLab />;
+      case "tournament-arena":
+        return <TournamentArena />;
       case "settings":
         return <SettingsPanel />;
       default:

@@ -25,6 +25,8 @@ interface WorkspaceContextType {
   setActiveTab: (tab: string) => void;
   setActiveSessionId: (id: string | null) => void;
   isLoadingSettings: boolean;
+  isDevMode: boolean;
+  setIsDevMode: (dev: boolean) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -40,6 +42,29 @@ export function WorkspaceProvider({
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  
+  const [isDevMode, setIsDevModeState] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("nim_dev_mode") === "true";
+    }
+    return false;
+  });
+
+  const setIsDevMode = useCallback((dev: boolean) => {
+    setIsDevModeState(dev);
+    localStorage.setItem("nim_dev_mode", String(dev));
+    
+    // Safety check: if dev mode is turned OFF and activeTab is a dev-only tab, reset to dashboard
+    if (!dev) {
+      setActiveTab((prev) => {
+        const devOnlyTabs = ["safety", "logs", "compare-lab", "tournament-arena"];
+        if (devOnlyTabs.includes(prev)) {
+          return "dashboard";
+        }
+        return prev;
+      });
+    }
+  }, []);
 
   const [apiKey, setApiKey] = useState(
     () => localStorage.getItem("nim_api_key") || "",
@@ -191,6 +216,8 @@ export function WorkspaceProvider({
         setActiveTab,
         setActiveSessionId,
         isLoadingSettings,
+        isDevMode,
+        setIsDevMode,
       }}
     >
       {children}

@@ -200,7 +200,7 @@ export default function ChatArea({
   onToggleHistory,
   onForkSession,
 }: ChatAreaProps) {
-  const { apiKey, model, sessions, updateSessionTitle } = useWorkspace();
+  const { apiKey, model, sessions, updateSessionTitle, isDevMode } = useWorkspace();
   const { toast } = useToast();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -525,14 +525,18 @@ export default function ChatArea({
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               History
             </button>
-            <button onClick={onToggleSessionSettings} className="text-sm font-medium text-neutral-400 hover:text-white transition flex items-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              Settings
-            </button>
-            <button onClick={() => setIsCodeExportOpen(true)} className="text-sm text-neutral-400 flex items-center gap-2 cursor-pointer hover:text-white transition">
-              <Code2 className="w-4 h-4" />
-              Build
-            </button>
+            {isDevMode && (
+              <button onClick={onToggleSessionSettings} className="text-sm font-medium text-neutral-400 hover:text-white transition flex items-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                Settings
+              </button>
+            )}
+            {isDevMode && (
+              <button onClick={() => setIsCodeExportOpen(true)} className="text-sm text-neutral-400 flex items-center gap-2 cursor-pointer hover:text-white transition">
+                <Code2 className="w-4 h-4" />
+                Build
+              </button>
+            )}
             <span className="text-sm font-medium text-white flex items-center gap-2 bg-[#222] px-3 py-1.5 rounded-full border border-neutral-700 cursor-pointer">
               <svg className="w-4 h-4 text-[#76b900]" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
               Playground
@@ -564,7 +568,7 @@ export default function ChatArea({
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 md:px-8 pt-20 pb-6 w-full max-w-4xl mx-auto flex flex-col gap-6 scrollbar-thin scrollbar-thumb-neutral-800">
           
-          {lastMetrics && (
+          {isDevMode && lastMetrics && (
             <div className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 md:p-4 flex flex-col gap-3 md:gap-4 text-xs font-mono text-neutral-400 mb-4 transition-all">
               <div 
                 className="flex items-center justify-between cursor-pointer select-none"

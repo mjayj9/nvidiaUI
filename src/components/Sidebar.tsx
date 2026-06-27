@@ -1,4 +1,4 @@
-import { Activity, Database, Eye, Home, Image as ImageIcon, LogOut, MessageSquare, Mic, Plus, Server, ShieldAlert, Trash2, Video, X } from "lucide-react";
+import { Activity, Database, Eye, Home, Image as ImageIcon, LogOut, MessageSquare, Mic, Plus, Server, ShieldAlert, Trash2, Video, X, GitCompare, Trophy } from "lucide-react";
 import { User as FirebaseUser } from "firebase/auth";
 import { signOut } from "../lib/firebase";
 import { cn } from "../lib/utils";
@@ -21,6 +21,8 @@ export default function Sidebar({
     setActiveSessionId,
     handleNewChat,
     handleDeleteSession,
+    isDevMode,
+    setIsDevMode,
   } = useWorkspace();
 
   const onSelectSession = (id: string) => {
@@ -54,8 +56,12 @@ export default function Sidebar({
     { id: "image-gen", label: "Image Generation", icon: ImageIcon },
     { id: "speech", label: "Speech & Audio Hub", icon: Mic },
     { id: "video", label: "Video Studio", icon: Video },
-    { id: "safety", label: "Safety Guard", icon: ShieldAlert },
-    { id: "logs", label: "Activity Logs", icon: Activity },
+    ...(isDevMode ? [
+      { id: "compare-lab", label: "Model Compare Lab", icon: GitCompare },
+      { id: "tournament-arena", label: "Tournament Arena", icon: Trophy },
+      { id: "safety", label: "Safety Guard", icon: ShieldAlert },
+      { id: "logs", label: "Activity Logs", icon: Activity }
+    ] : []),
     { id: "settings", label: "Settings", icon: Server },
   ];
 
@@ -78,6 +84,30 @@ export default function Sidebar({
           className="md:hidden p-1.5 text-neutral-400 hover:text-white"
         >
           <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Developer Mode Switch */}
+      <div className="px-4 py-3 border-b border-neutral-900/60 flex items-center justify-between bg-neutral-950/40 select-none">
+        <span className={cn(
+          "text-[10px] font-bold tracking-widest uppercase transition-colors duration-300",
+          isDevMode ? "text-[#76b900] drop-shadow-[0_0_8px_rgba(118,185,0,0.4)]" : "text-neutral-500"
+        )}>
+          {isDevMode ? "Developer Mode ON" : "Developer Mode OFF"}
+        </span>
+        <button
+          onClick={() => setIsDevMode(!isDevMode)}
+          className={cn(
+            "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-neutral-800 transition-colors duration-300 focus:outline-none items-center",
+            isDevMode ? "bg-[#76b900]/25 border-[#76b900]/40" : "bg-neutral-900"
+          )}
+        >
+          <span
+            className={cn(
+              "pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-300 shadow",
+              isDevMode ? "translate-x-4.5 bg-[#76b900]" : "translate-x-0.5 bg-neutral-500"
+            )}
+          />
         </button>
       </div>
 
