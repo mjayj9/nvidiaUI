@@ -17,6 +17,7 @@ import {
   Square,
   Activity,
   Code2,
+  ArrowRight,
 } from "lucide-react";
 import Markdown from "react-markdown";
 import { Message, ChatSession, Attachment } from "../types";
@@ -659,10 +660,10 @@ export default function ChatArea({
               </div>
               <div className="flex gap-4 mt-8 flex-wrap justify-center max-w-2xl">
                  <button className="px-5 py-3 rounded-lg border border-neutral-700/50 bg-neutral-900/50 text-neutral-300 hover:bg-neutral-800 transition text-sm flex items-center gap-2 group">
-                   Which number is larger, 9.11 or 9.8? <span className="text-[#76b900] group-hover:translate-x-1 transition-transform">➔</span>
+                   Which number is larger, 9.11 or 9.8? <ArrowRight className="w-3.5 h-3.5 text-[#76b900] group-hover:translate-x-0.5 transition-transform" />
                  </button>
                  <button className="px-5 py-3 rounded-lg border border-neutral-700/50 bg-neutral-900/50 text-neutral-300 hover:bg-neutral-800 transition text-sm flex items-center gap-2 group">
-                   How many 'r's are in 'strawberry'? <span className="text-[#76b900] group-hover:translate-x-1 transition-transform">➔</span>
+                   How many 'r's are in 'strawberry'? <ArrowRight className="w-3.5 h-3.5 text-[#76b900] group-hover:translate-x-0.5 transition-transform" />
                  </button>
               </div>
             </div>

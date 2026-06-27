@@ -364,7 +364,7 @@ export default function SafetyGuard() {
                           </>
                         )}
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text.5[10px] font-mono">
+                      <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
                         {Object.entries(inputSafetyResult.categories).map(([cat, val]) => (
                           <div key={cat} className="flex justify-between p-2 bg-[#050505] rounded-lg border border-neutral-850/80">
                             <span className="text-neutral-500 capitalize">{cat}:</span>
