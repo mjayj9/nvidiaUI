@@ -20,6 +20,7 @@ import DeploymentWizard from "./DeploymentWizard";
 import EvalSet from "./EvalSet";
 import SavedWorks from "./SavedWorks";
 import SpeechVideoHub from "./SpeechVideoHub";
+import OnboardingGate from "./OnboardingGate";
 import { getChatSessions, forkSession } from "../lib/api";
 import { Loader2, Menu } from "lucide-react";
 import { WorkspaceProvider, useWorkspace } from "../context/WorkspaceContext";
@@ -40,8 +41,19 @@ function DashboardContent({ user }: DashboardProps) {
     updateSessionsList,
   } = useWorkspace();
 
+  const [onboardingCompleted, setOnboardingCompleted] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("nim_onboarding_completed") === "true";
+    }
+    return false;
+  });
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSessionSettingsOpen, setIsSessionSettingsOpen] = useState(false);
+
+  if (!onboardingCompleted) {
+    return <OnboardingGate onComplete={() => setOnboardingCompleted(true)} />;
+  }
 
   const getSessionModel = (sessionId: string) => {
     let sessionModel = sessions.find((s) => s.id === sessionId)?.model || model;

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { modelRegistry, ModelRegistryItem } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { useToast } from "../context/ToastContext";
+import { validateNvidiaApiKey } from "../lib/apiKeyValidation";
 
 export default function SettingsPanel() {
   const { apiKey: contextKey, updateApiKey, model: selectedModel, updateModel } = useWorkspace();
@@ -56,44 +57,13 @@ export default function SettingsPanel() {
     setTestStatus("testing");
     setTestMessage("");
 
-    try {
-      let res = await fetch("/api/nim/models", {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-        },
-      });
-
-      if (res.status === 404) {
-        console.warn("Express backend proxy returned 404. Validating API Key directly against NVIDIA Chat API.");
-        res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`,
-          },
-          body: JSON.stringify({
-            model: "meta/llama-3.1-8b-instruct",
-            messages: [{ role: "user", content: "test" }],
-            max_tokens: 1,
-          }),
-        });
-      }
-
-      if (res.ok) {
-        setTestStatus("success");
-        setTestMessage("API validation successful. Hosted DGX endpoints responsive.");
-      } else {
-        const text = await res.text();
-        throw new Error(`API returned status ${res.status}: ${text.slice(0, 80)}`);
-      }
-    } catch (e: any) {
-      console.error(e);
+    const result = await validateNvidiaApiKey(apiKey);
+    if (result.success) {
+      setTestStatus("success");
+      setTestMessage(result.message);
+    } else {
       setTestStatus("failed");
-      if (e.message && (e.message.includes("Failed to fetch") || e.message.includes("fetch"))) {
-        setTestMessage("Failed to fetch. 렌더(Render)에서 'Static Site'가 아닌 'Web Service'로 배포하셔야 백엔드 프록시가 작동하여 CORS 오류 없이 작동합니다.");
-      } else {
-        setTestMessage(e.message);
-      }
+      setTestMessage(result.message);
     }
   };
 
