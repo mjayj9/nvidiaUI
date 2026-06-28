@@ -1,4 +1,4 @@
-import { ArrowRight, Bot, Cpu, Database, Eye, Image as ImageIcon, MessageSquare, Mic, ShieldAlert, Sparkles, Video, FolderHeart, Activity, Award, Server } from "lucide-react";
+import { ArrowRight, Bot, Cpu, Database, Eye, Image as ImageIcon, MessageSquare, Mic, ShieldAlert, Sparkles, Video, FolderHeart, Activity, Award, Server, GitCompare, Trophy } from "lucide-react";
 import { modelRegistry } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
 
@@ -259,7 +259,7 @@ export default function DashboardOverview({
           <div>
             <span className="text-neutral-550 text-[9px] font-bold uppercase tracking-widest">Selected Core LLM</span>
             <div className="text-xs font-bold text-[#76b900] truncate max-w-[130px] mt-1">
-              {modelRegistry.find((m) => m.id === selectedModel)?.name || selectedModel.split("/").pop()}
+              {modelRegistry.find((m) => m.id === selectedModel)?.displayName || selectedModel.split("/").pop()}
             </div>
           </div>
           <Bot className="w-6 h-6 text-[#76b900]/80" />

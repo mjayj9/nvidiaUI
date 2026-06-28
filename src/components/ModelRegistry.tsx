@@ -22,7 +22,7 @@ export default function ModelRegistry() {
     
     const matchesTag =
       selectedTag === "all" ||
-      m.capabilities.includes(selectedTag) ||
+      m.capabilities.includes(selectedTag as any) ||
       (selectedTag === "text" && m.capabilities.includes("chat")) ||
       (selectedTag === "vision" && m.capabilities.includes("vision"));
 
