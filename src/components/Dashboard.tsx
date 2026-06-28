@@ -14,6 +14,12 @@ import ActivityLogs from "./ActivityLogs";
 import SettingsPanel from "./SettingsPanel";
 import CompareLab from "./CompareLab";
 import TournamentArena from "./TournamentArena";
+import ModelRegistry from "./ModelRegistry";
+import RequestInspector from "./RequestInspector";
+import DeploymentWizard from "./DeploymentWizard";
+import EvalSet from "./EvalSet";
+import SavedWorks from "./SavedWorks";
+import SpeechVideoHub from "./SpeechVideoHub";
 import { getChatSessions, forkSession } from "../lib/api";
 import { Loader2, Menu } from "lucide-react";
 import { WorkspaceProvider, useWorkspace } from "../context/WorkspaceContext";
@@ -88,7 +94,7 @@ function DashboardContent({ user }: DashboardProps) {
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center bg-neutral-950">
             <Loader2 className="w-6 h-6 animate-spin text-[#76b900]" />
-            <p className="text-xs text-neutral-500 mt-2">Opening chat session...</p>
+            <p className="text-xs text-neutral-550 mt-2">Opening chat session...</p>
           </div>
         );
       case "rag":
@@ -101,6 +107,18 @@ function DashboardContent({ user }: DashboardProps) {
         return <SpeechHub />;
       case "video":
         return <VideoStudio />;
+      case "speech-video":
+        return <SpeechVideoHub />;
+      case "saved-works":
+        return <SavedWorks onNavigate={setActiveTab} />;
+      case "model-registry":
+        return <ModelRegistry />;
+      case "request-inspector":
+        return <RequestInspector />;
+      case "deployment":
+        return <DeploymentWizard />;
+      case "eval-set":
+        return <EvalSet />;
       case "safety":
         return <SafetyGuard />;
       case "logs":

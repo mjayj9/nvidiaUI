@@ -27,6 +27,8 @@ interface WorkspaceContextType {
   isLoadingSettings: boolean;
   isDevMode: boolean;
   setIsDevMode: (dev: boolean) => void;
+  generalPreset: string;
+  setGeneralPreset: (preset: string) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -57,7 +59,7 @@ export function WorkspaceProvider({
     // Safety check: if dev mode is turned OFF and activeTab is a dev-only tab, reset to dashboard
     if (!dev) {
       setActiveTab((prev) => {
-        const devOnlyTabs = ["safety", "logs", "compare-lab", "tournament-arena"];
+        const devOnlyTabs = ["safety", "logs", "compare-lab", "tournament-arena", "model-registry", "request-inspector", "deployment", "eval-set", "code-export-tab"];
         if (devOnlyTabs.includes(prev)) {
           return "dashboard";
         }
@@ -81,6 +83,31 @@ export function WorkspaceProvider({
 
     return saved || "meta/llama-3.1-70b-instruct";
   });
+
+  const [generalPreset, setGeneralPresetState] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("nim_general_preset") || "balanced";
+    }
+    return "balanced";
+  });
+
+  const setGeneralPreset = useCallback((preset: string) => {
+    setGeneralPresetState(preset);
+    localStorage.setItem("nim_general_preset", preset);
+    
+    const presetMap: Record<string, string> = {
+      fast: "meta/llama-3.1-8b-instruct",
+      balanced: "meta/llama-3.1-70b-instruct",
+      accurate: "nvidia/llama-3.3-nemotron-super-49b-v1.5",
+      creative: "meta/llama-3.3-70b-instruct",
+      eco: "meta/llama-3.1-8b-instruct"
+    };
+    
+    const mappedModel = presetMap[preset] || "meta/llama-3.1-70b-instruct";
+    setModel(mappedModel);
+    localStorage.setItem("nim_model", mappedModel);
+  }, []);
+
 
   const loadSessions = useCallback(async () => {
     try {
@@ -218,6 +245,8 @@ export function WorkspaceProvider({
         isLoadingSettings,
         isDevMode,
         setIsDevMode,
+        generalPreset,
+        setGeneralPreset,
       }}
     >
       {children}

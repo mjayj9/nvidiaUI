@@ -1,4 +1,4 @@
-import { Activity, Database, Eye, Home, Image as ImageIcon, LogOut, MessageSquare, Mic, Plus, Server, ShieldAlert, Trash2, Video, X, GitCompare, Trophy } from "lucide-react";
+import { Activity, Database, Eye, Home, Image as ImageIcon, LogOut, MessageSquare, Mic, Plus, Server, ShieldAlert, Trash2, Video, X, GitCompare, Trophy, Cpu, Award, FolderHeart } from "lucide-react";
 import { User as FirebaseUser } from "firebase/auth";
 import { signOut } from "../lib/firebase";
 import { cn } from "../lib/utils";
@@ -48,22 +48,30 @@ export default function Sidebar({
     signOut().catch(console.error);
   };
 
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: Home },
-    { id: "chat", label: "Chat & Writing", icon: MessageSquare },
-    { id: "rag", label: "Document Search (RAG)", icon: Database },
-    { id: "vision", label: "VLM Image Analysis", icon: Eye },
-    { id: "image-gen", label: "Image Generation", icon: ImageIcon },
-    { id: "speech", label: "Speech & Audio Hub", icon: Mic },
-    { id: "video", label: "Video Studio", icon: Video },
-    ...(isDevMode ? [
-      { id: "compare-lab", label: "Model Compare Lab", icon: GitCompare },
-      { id: "tournament-arena", label: "Tournament Arena", icon: Trophy },
-      { id: "safety", label: "Safety Guard", icon: ShieldAlert },
-      { id: "logs", label: "Activity Logs", icon: Activity }
-    ] : []),
-    { id: "settings", label: "Settings", icon: Server },
-  ];
+  const navItems = isDevMode
+    ? [
+        { id: "dashboard", label: "Dashboard (Mission Control)", icon: Home },
+        { id: "chat", label: "Chat Playground", icon: MessageSquare },
+        { id: "model-registry", label: "Model Registry", icon: Cpu },
+        { id: "compare-lab", label: "Compare Lab", icon: GitCompare },
+        { id: "tournament-arena", label: "Tournament Arena", icon: Trophy },
+        { id: "request-inspector", label: "Request Inspector", icon: Activity },
+        { id: "eval-set", label: "Prompt & Eval Set", icon: Award },
+        { id: "safety", label: "Safety Pipeline", icon: ShieldAlert },
+        { id: "logs", label: "Logs / Traces", icon: Activity },
+        { id: "deployment", label: "Deployment Wizard", icon: Server },
+        { id: "settings", label: "Settings", icon: Server },
+      ]
+    : [
+        { id: "dashboard", label: "홈 (Home)", icon: Home },
+        { id: "chat", label: "AI 채팅 (Chat)", icon: MessageSquare },
+        { id: "rag", label: "문서 질문하기 (Ask Docs)", icon: Database },
+        { id: "vision", label: "이미지 분석 (Analyze)", icon: Eye },
+        { id: "image-gen", label: "이미지 생성 (Create)", icon: ImageIcon },
+        { id: "speech-video", label: "음성/영상 도구 (AV Tools)", icon: Mic },
+        { id: "saved-works", label: "내 작업함 (Gallery)", icon: FolderHeart },
+        { id: "settings", label: "설정 (Settings)", icon: Server },
+      ];
 
   if (!isOpen) return null;
 
@@ -77,7 +85,7 @@ export default function Sidebar({
               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
             </svg>
           </div>
-          <span className="text-sm font-bold text-white tracking-wider">NVIDIA NIM Workspace</span>
+          <span className="text-xs font-extrabold text-white tracking-widest uppercase">NVIDIA NIM Hub</span>
         </div>
         <button
           onClick={() => setIsOpen(false)}
@@ -87,30 +95,37 @@ export default function Sidebar({
         </button>
       </div>
 
-      {/* Developer Mode Switch */}
-      <div className="px-4 py-3 border-b border-neutral-900/60 flex items-center justify-between bg-neutral-950/40 select-none">
-        <span className={cn(
-          "text-[10px] font-bold tracking-widest uppercase transition-colors duration-300",
-          isDevMode ? "text-[#76b900] drop-shadow-[0_0_8px_rgba(118,185,0,0.4)]" : "text-neutral-500"
-        )}>
-          {isDevMode ? "Developer Mode ON" : "Developer Mode OFF"}
-        </span>
-        <button
-          onClick={() => setIsDevMode(!isDevMode)}
-          className={cn(
-            "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-neutral-800 transition-colors duration-300 focus:outline-none items-center",
-            isDevMode ? "bg-[#76b900]/25 border-[#76b900]/40" : "bg-neutral-900"
-          )}
-        >
-          <span
+      {/* Mode Switch Panel */}
+      <div className="p-3 border-b border-neutral-900 bg-[#080808]/80 select-none shrink-0">
+        <div className="relative flex bg-neutral-950 rounded-xl p-1 border border-neutral-900">
+          <div
             className={cn(
-              "pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full transition-transform duration-300 shadow",
-              isDevMode ? "translate-x-4.5 bg-[#76b900]" : "translate-x-0.5 bg-neutral-500"
+              "absolute top-1 bottom-1 w-[calc(50%-4px)] bg-[#76b900] rounded-lg transition-transform duration-300 ease-out",
+              isDevMode ? "translate-x-[100%]" : "translate-x-0"
             )}
           />
-        </button>
+          
+          <button
+            onClick={() => setIsDevMode(false)}
+            className={cn(
+              "relative z-10 w-1/2 text-center py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
+              !isDevMode ? "text-black" : "text-neutral-550 hover:text-neutral-350"
+            )}
+          >
+            Use AI
+          </button>
+          
+          <button
+            onClick={() => setIsDevMode(true)}
+            className={cn(
+              "relative z-10 w-1/2 text-center py-1.5 text-[10px] font-extrabold uppercase tracking-wider rounded-lg transition-all cursor-pointer",
+              isDevMode ? "text-black" : "text-neutral-550 hover:text-neutral-350"
+            )}
+          >
+            Build with NIM
+          </button>
+        </div>
       </div>
-
       {/* Tabs navigation list */}
       <div className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin scrollbar-thumb-neutral-900">
         {navItems.map((item) => {

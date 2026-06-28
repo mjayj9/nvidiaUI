@@ -201,7 +201,7 @@ export default function ChatArea({
   onToggleHistory,
   onForkSession,
 }: ChatAreaProps) {
-  const { apiKey, model, sessions, updateSessionTitle, isDevMode } = useWorkspace();
+  const { apiKey, model, sessions, updateSessionTitle, isDevMode, generalPreset, setGeneralPreset, setActiveTab } = useWorkspace();
   const { toast } = useToast();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -303,8 +303,37 @@ export default function ChatArea({
     }
   };
 
+  const handleSaveToGallery = () => {
+    if (messages.length === 0) {
+      toast("저장할 대화 내역이 없습니다.", "error");
+      return;
+    }
+    const savedWorks = localStorage.getItem("nim_saved_works");
+    const list = savedWorks ? JSON.parse(savedWorks) : [];
+    
+    const title = currentSession?.title || "AI 대화 기록";
+    const content = messages[0]?.content || "";
+    const details = messages.map(m => `**${m.role.toUpperCase()}**: ${m.content}`).join("\n\n");
+    
+    const newItem = {
+      id: "saved_" + Date.now(),
+      type: "chat" as const,
+      title: title,
+      content: content.substring(0, 100) + (content.length > 100 ? "..." : ""),
+      details: details,
+      timestamp: Date.now(),
+      isFavorite: false,
+      params: {
+        sessionId: sessionId
+      }
+    };
+    
+    localStorage.setItem("nim_saved_works", JSON.stringify([newItem, ...list]));
+    toast("대화 기록이 내 작업함에 저장되었습니다!", "success");
+  };
+
   const handleSend = async () => {
-    if ((!input.trim() && !selectedFile) || !apiKey || isGenerating) return;
+    if ((!input.trim() && !selectedFile) || isGenerating) return;
 
     const userContent = input.trim();
     setInput("");
@@ -315,6 +344,58 @@ export default function ChatArea({
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (inputRef.current) {
       inputRef.current.style.height = "auto";
+    }
+
+    if (!apiKey) {
+      setIsGenerating(true);
+      setStreamingContent("");
+      
+      const userMessage = await addMessage(
+        sessionId,
+        "user",
+        userContent,
+        undefined
+      );
+      setMessages((prev) => [...prev, userMessage]);
+
+      if (messages.length === 0) {
+        updateSessionTitle(sessionId, userContent.substring(0, 30) || "AI 대화");
+      }
+
+      let demoResponse = "";
+      const fullResponse = `안녕하세요! 현재 NVIDIA NIM 데모 모드로 체험 중이십니다. 
+이 모드에서는 실제로 AI API 호출이 나가지 않고 사전 빌드된 시뮬레이션 데이터를 제공합니다.
+
+NVIDIA NIM(Inference Microservices)의 대표적인 장점은 다음과 같습니다:
+1. **압도적인 성능**: TensorRT 및 Triton 추론 서버 기반의 극한 최적화로 동종 모델 대비 최대 3~4배 빠른 응답 속도를 보여줍니다.
+2. **배포 간소화**: 하나의 Docker 명령어로 복잡한 라이브러리 설치 없이 즉시 배포할 수 있는 컨테이너 패키지를 제공합니다.
+3. **완벽한 데이터 주권**: 기업 내부 인프라(On-Premise)에 NIM을 self-hosted 방식으로 배포하여 데이터 외부 노출 없이 안전한 AI 시스템을 구축할 수 있습니다.
+
+실제 기능을 테스트해 보시려면 우측 상단이나 사이드바의 **설정(Settings)** 메뉴를 클릭하여 NVIDIA API Key (nvapi-...)를 등록해 주세요.`;
+
+      let charIndex = 0;
+      const interval = setInterval(async () => {
+        if (charIndex < fullResponse.length) {
+          const nextChars = fullResponse.substring(charIndex, charIndex + 8);
+          demoResponse += nextChars;
+          setStreamingContent(demoResponse);
+          charIndex += 8;
+        } else {
+          clearInterval(interval);
+          setIsGenerating(false);
+          
+          const aiMessage = await addMessage(
+            sessionId,
+            "assistant",
+            fullResponse,
+            undefined,
+            activeModel
+          );
+          setMessages((prev) => [...prev, aiMessage]);
+          setStreamingContent("");
+        }
+      }, 30);
+      return;
     }
 
     try {
@@ -509,18 +590,9 @@ export default function ChatArea({
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={async () => {
-              try {
-                const modelsUsed = Array.from(new Set(messages.map(m => m.model || currentSession?.model || "unknown")));
-                await saveChatSnapshot(userId, currentSession?.title || "Saved Chat", modelsUsed, messages);
-                toast("성공적으로 저장되었습니다", "success");
-              } catch (e) {
-                console.error("Failed to save chat", e);
-                toast("저장에 실패했습니다.", "error");
-              }
-            }} className="text-sm font-medium text-neutral-400 hover:text-white transition flex items-center gap-1.5">
+            <button onClick={handleSaveToGallery} className="text-sm font-medium text-neutral-400 hover:text-white transition flex items-center gap-1.5 cursor-pointer">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-              Save Chat
+              내 작업함에 저장
             </button>
             <button onClick={onToggleHistory} className="text-sm font-medium text-neutral-400 hover:text-white transition flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -543,31 +615,76 @@ export default function ChatArea({
               Playground
             </span>
             <a href="#" className="text-sm text-neutral-400 hover:text-white transition">Model Card</a>
-            <select
-              value={activeModel}
-              onChange={(e) => {
-                setLocalModel(e.target.value);
-                if (sessionId) {
-                  updateSessionSettings(sessionId, { model: e.target.value });
-                }
-              }}
-              className="text-sm font-medium text-white bg-transparent outline-none cursor-pointer hover:text-[#76b900] transition"
-            >
-              {Array.from(new Set(chatCapableModels.map(m => m.brand))).map(brand => (
-                <optgroup key={brand} label={brand} className="bg-neutral-900 text-white">
-                  {chatCapableModels.filter(m => m.brand === brand).map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
+            {isDevMode ? (
+              <select
+                value={activeModel}
+                onChange={(e) => {
+                  setLocalModel(e.target.value);
+                  if (sessionId) {
+                    updateSessionSettings(sessionId, { model: e.target.value });
+                  }
+                }}
+                className="text-sm font-medium text-white bg-transparent outline-none cursor-pointer hover:text-[#76b900] transition"
+              >
+                {Array.from(new Set(chatCapableModels.map(m => m.brand))).map(brand => (
+                  <optgroup key={brand} label={brand} className="bg-neutral-900 text-white">
+                    {chatCapableModels.filter(m => m.brand === brand).map(m => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+              </select>
+            ) : (
+              <div className="flex bg-neutral-900/60 p-0.5 rounded-lg border border-neutral-850 shrink-0">
+                {[
+                  { id: "fast", label: "⚡ 빠름" },
+                  { id: "balanced", label: "⚖️ 균형" },
+                  { id: "accurate", label: "🧠 정확함" },
+                  { id: "creative", label: "🎨 창의적" }
+                ].map(p => {
+                  const isSelected = generalPreset === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      onClick={() => setGeneralPreset(p.id)}
+                      className={cn(
+                        "px-2.5 py-1 text-[10px] font-bold rounded-md transition cursor-pointer",
+                        isSelected
+                          ? "bg-[#76b900] text-black font-extrabold"
+                          : "text-neutral-500 hover:text-white"
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </header>
 
+        {!apiKey && (
+          <div className="absolute top-16 left-0 right-0 h-10 z-20 bg-amber-950/50 border-b border-amber-900/40 px-6 py-2 flex items-center justify-between text-[11px] text-amber-400 backdrop-blur-md">
+            <div className="flex items-center gap-2">
+              <span className="animate-pulse">💡</span>
+              <span>현재 <strong>데모 체험 모드</strong>로 작동 중입니다. 실제 AI 기능을 테스트하시려면 API Key를 등록해 주세요.</span>
+            </div>
+            <button
+              onClick={() => setActiveTab("settings")}
+              className="text-[10px] uppercase font-bold text-white hover:underline cursor-pointer bg-transparent border-none shrink-0"
+            >
+              설정하기
+            </button>
+          </div>
+        )}
+
         {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-4 md:px-8 pt-20 pb-6 w-full max-w-4xl mx-auto flex flex-col gap-6 scrollbar-thin scrollbar-thumb-neutral-800">
+        <div className={cn(
+          "flex-1 overflow-y-auto px-4 md:px-8 pb-6 w-full max-w-4xl mx-auto flex flex-col gap-6 scrollbar-thin scrollbar-thumb-neutral-800",
+          apiKey ? "pt-20" : "pt-28"
+        )}>
           
           {isDevMode && lastMetrics && (
             <div className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 md:p-4 flex flex-col gap-3 md:gap-4 text-xs font-mono text-neutral-400 mb-4 transition-all">
@@ -849,9 +966,9 @@ export default function ChatArea({
               placeholder={
                 apiKey
                   ? "I can evaluate text, images, or audio based on your prompt or an example from above."
-                  : "Please configure API key in settings..."
+                  : "현재 데모 체험 모드입니다. 자유롭게 질문을 입력해 보세요..."
               }
-              disabled={!apiKey || isGenerating}
+              disabled={isGenerating}
               className="w-full bg-transparent resize-none overflow-y-auto px-3 pb-12 outline-none text-sm scrollbar-thin text-neutral-200 placeholder-neutral-500 disabled:opacity-50 min-h-[80px]"
               rows={3}
             />
@@ -882,7 +999,7 @@ export default function ChatArea({
                 </button>
                 <button 
                   onClick={handleSend}
-                  disabled={(!input.trim() && !selectedFile) || !apiKey || isGenerating}
+                  disabled={(!input.trim() && !selectedFile) || isGenerating}
                   className="w-8 h-8 rounded-full bg-neutral-600 disabled:opacity-50 flex items-center justify-center text-white hover:bg-neutral-500 transition"
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>

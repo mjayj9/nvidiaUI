@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { chatWithNvidiaObject, NimMetrics } from "../lib/nim";
 import { NIM_MODELS } from "../models";
-import { Play, Cpu, Trash2, Plus, Table, Zap, Clock, Award, Loader2, Sparkles } from "lucide-react";
+import { Play, Cpu, Trash2, Table, Zap, Clock, Award, Loader2, Star } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import { cn } from "../lib/utils";
 import Markdown from "react-markdown";
@@ -15,6 +15,8 @@ interface ModelComparisonState {
   isGenerating: boolean;
   metrics: NimMetrics | null;
   error: string | null;
+  qualityScore?: number;
+  notes?: string;
 }
 
 export default function CompareLab() {
@@ -29,7 +31,17 @@ export default function CompareLab() {
 
   const [comparisons, setComparisons] = useState<ModelComparisonState[]>([]);
   const [isAnyGenerating, setIsAnyGenerating] = useState(false);
+  const [repeatCount, setRepeatCount] = useState<number>(1);
   const abortControllersRef = useRef<AbortController[]>([]);
+
+  // Local storage benchmark history
+  const [compareHistory, setCompareHistory] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("nim_compare_history");
+      return saved ? JSON.parse(saved) : [];
+    }
+    return [];
+  });
 
   // Filter only text models
   const textModels = NIM_MODELS.filter((m) => m.type === "TEXT" || m.capabilities.includes("chat"));
@@ -73,7 +85,7 @@ export default function CompareLab() {
       return;
     }
 
-    handleStopAll(); // Clean previous runs
+    handleStopAll();
     setIsAnyGenerating(true);
 
     const initialComparisons: ModelComparisonState[] = selectedModels.map((modelId) => {
@@ -85,6 +97,8 @@ export default function CompareLab() {
         isGenerating: true,
         metrics: null,
         error: null,
+        qualityScore: 3,
+        notes: "",
       };
     });
 
@@ -93,35 +107,84 @@ export default function CompareLab() {
     const controllers: AbortController[] = [];
     abortControllersRef.current = controllers;
 
-    const promises = selectedModels.map(async (modelId, index) => {
-      const controller = new AbortController();
-      controllers.push(controller);
+    const promises = selectedModels.map(async (modelId) => {
+      const runsMetrics: NimMetrics[] = [];
+      let lastResponse = "";
 
-      try {
-        await chatWithNvidiaObject(
-          apiKey,
-          modelId,
-          [{ role: "user", content: prompt }],
-          (chunk) => {
-            setComparisons((prev) =>
-              prev.map((c) => (c.modelId === modelId ? { ...c, response: c.response + chunk } : c))
-            );
-          },
-          {
-            abortSignal: controller.signal,
-            onMetrics: (metrics) => {
-              setComparisons((prev) =>
-                prev.map((c) => (c.modelId === modelId ? { ...c, metrics, isGenerating: false } : c))
-              );
+      for (let run = 1; run <= repeatCount; run++) {
+        const controller = new AbortController();
+        controllers.push(controller);
+
+        try {
+          let currentResponse = "";
+          await chatWithNvidiaObject(
+            apiKey,
+            modelId,
+            [{ role: "user", content: prompt }],
+            (chunk) => {
+              currentResponse += chunk;
+              if (run === repeatCount) {
+                setComparisons((prev) =>
+                  prev.map((c) =>
+                    c.modelId === modelId ? { ...c, response: currentResponse } : c
+                  )
+                );
+              }
             },
-          }
-        );
-      } catch (error: any) {
-        if (error.name !== "AbortError") {
-          setComparisons((prev) =>
-            prev.map((c) => (c.modelId === modelId ? { ...c, error: error.message || String(error), isGenerating: false } : c))
+            {
+              abortSignal: controller.signal,
+              onMetrics: (metrics) => {
+                runsMetrics.push(metrics);
+              },
+            }
           );
+          lastResponse = currentResponse;
+        } catch (error: any) {
+          if (error.name !== "AbortError") {
+            setComparisons((prev) =>
+              prev.map((c) =>
+                c.modelId === modelId
+                  ? { ...c, error: error.message || String(error), isGenerating: false }
+                  : c
+              )
+            );
+            break;
+          }
         }
+      }
+
+      if (runsMetrics.length > 0) {
+        const avgTtft = runsMetrics.reduce((acc, curr) => acc + curr.ttft, 0) / runsMetrics.length;
+        const avgTotalTime =
+          runsMetrics.reduce((acc, curr) => acc + curr.totalTime, 0) / runsMetrics.length;
+        const avgTps = runsMetrics.reduce((acc, curr) => acc + curr.tps, 0) / runsMetrics.length;
+        const totalTokens = runsMetrics.reduce((acc, curr) => acc + curr.tokens, 0);
+
+        const avgMetrics: NimMetrics = {
+          ttft: Math.round(avgTtft),
+          totalTime: Math.round(avgTotalTime),
+          tps: Number(avgTps.toFixed(1)),
+          tokens: Math.round(totalTokens / runsMetrics.length),
+        };
+
+        setComparisons((prev) =>
+          prev.map((c) =>
+            c.modelId === modelId
+              ? {
+                  ...c,
+                  response: lastResponse,
+                  metrics: avgMetrics,
+                  isGenerating: false,
+                }
+              : c
+          )
+        );
+      } else {
+        setComparisons((prev) =>
+          prev.map((c) =>
+            c.modelId === modelId ? { ...c, isGenerating: false } : c
+          )
+        );
       }
     });
 
@@ -130,7 +193,68 @@ export default function CompareLab() {
     });
   };
 
-  // Helper to determine best metrics
+  const handleUpdateQuality = (modelId: string, score: number) => {
+    setComparisons((prev) =>
+      prev.map((c) => (c.modelId === modelId ? { ...c, qualityScore: score } : c))
+    );
+  };
+
+  const handleUpdateNotes = (modelId: string, text: string) => {
+    setComparisons((prev) =>
+      prev.map((c) => (c.modelId === modelId ? { ...c, notes: text } : c))
+    );
+  };
+
+  const handleSaveBenchmark = () => {
+    if (comparisons.length === 0) return;
+    const entry = {
+      id: "bench_" + Date.now(),
+      timestamp: Date.now(),
+      prompt,
+      runs: comparisons.map((c) => ({
+        modelId: c.modelId,
+        name: c.name,
+        metrics: c.metrics,
+        response: c.response,
+        qualityScore: c.qualityScore || 3,
+        notes: c.notes || "",
+      })),
+    };
+    const updated = [entry, ...compareHistory].slice(0, 20);
+    setCompareHistory(updated);
+    localStorage.setItem("nim_compare_history", JSON.stringify(updated));
+    toast("벤치마크 결과가 로컬 저장소에 보관되었습니다.", "success");
+  };
+
+  const handleExportJSON = () => {
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(comparisons, null, 2));
+    const a = document.createElement("a");
+    a.setAttribute("href", dataStr);
+    a.setAttribute("download", `compare-benchmark-${Date.now()}.json`);
+    a.click();
+    toast("JSON 파일이 다운로드되었습니다.", "success");
+  };
+
+  const handleExportCSV = () => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Model ID,Model Name,TTFT (ms),TPS (tok/s),Total Latency (ms),Tokens,Quality Score,Notes\n";
+    comparisons.forEach((c) => {
+      csvContent += `"${c.modelId}","${c.name}",${c.metrics?.ttft || 0},${
+        c.metrics?.tps || 0
+      },${c.metrics?.totalTime || 0},${c.metrics?.tokens || 0},${
+        c.qualityScore || 3
+      },"${(c.notes || "").replace(/"/g, '""')}"\n`;
+    });
+    const encodedUri = encodeURI(csvContent);
+    const a = document.createElement("a");
+    a.setAttribute("href", encodedUri);
+    a.setAttribute("download", `compare-benchmark-${Date.now()}.csv`);
+    a.click();
+    toast("CSV 파일이 다운로드되었습니다.", "success");
+  };
+
   const getBestMetrics = () => {
     let lowestTTFT = Infinity;
     let highestTPS = -1;
@@ -165,43 +289,65 @@ export default function CompareLab() {
   ];
 
   return (
-    <div className="flex-1 flex flex-col bg-neutral-950 text-neutral-100 overflow-hidden font-sans">
-      {/* Header */}
-      <header className="p-6 border-b border-neutral-900 shrink-0 bg-neutral-950/80 backdrop-blur-md flex items-center justify-between">
+    <div className="flex-1 flex flex-col bg-neutral-950 text-neutral-100 overflow-hidden font-sans border-t border-neutral-900">
+      <header className="p-6 border-b border-neutral-900 shrink-0 bg-neutral-950/80 backdrop-blur-md flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <div className="flex items-center gap-2">
             <Cpu className="w-5 h-5 text-[#76b900]" />
-            <h1 className="text-lg font-bold text-white tracking-tight">Model Compare Lab</h1>
-            <span className="px-2 py-0.5 text-[9px] font-bold text-[#76b900] bg-[#76b900]/10 border border-[#76b900]/25 rounded uppercase">Developer Console</span>
+            <h1 className="text-sm font-bold text-white tracking-tight uppercase">Model Compare Lab</h1>
+            <span className="px-2 py-0.5 text-[8px] font-bold text-[#76b900] bg-[#76b900]/10 border border-[#76b900]/25 rounded uppercase">Developer Console</span>
           </div>
-          <p className="text-xs text-neutral-500 mt-1">
+          <p className="text-[10px] text-neutral-500 mt-1">
             동일한 프롬프트에 대해 여러 NVIDIA NIM 모델의 실시간 생성 속도, 비용 및 응답 품질을 비교 벤치마킹합니다.
           </p>
         </div>
-        {isAnyGenerating && (
-          <button
-            onClick={handleStopAll}
-            className="px-4 py-2 bg-red-950 hover:bg-red-900 border border-red-800 text-red-200 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shadow-red-950/30"
-          >
-            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            Stop Generating
-          </button>
-        )}
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          {comparisons.length > 0 && (
+            <>
+              <button
+                onClick={handleSaveBenchmark}
+                className="px-3 py-1.5 bg-neutral-900 border border-neutral-850 hover:border-neutral-750 text-neutral-300 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition cursor-pointer"
+              >
+                Save Run
+              </button>
+              <button
+                onClick={handleExportJSON}
+                className="px-3 py-1.5 bg-neutral-900 border border-neutral-850 hover:border-neutral-750 text-neutral-300 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition cursor-pointer"
+              >
+                JSON Export
+              </button>
+              <button
+                onClick={handleExportCSV}
+                className="px-3 py-1.5 bg-neutral-900 border border-neutral-850 hover:border-neutral-750 text-neutral-300 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition cursor-pointer"
+              >
+                CSV Export
+              </button>
+            </>
+          )}
+          {isAnyGenerating && (
+            <button
+              onClick={handleStopAll}
+              className="px-4 py-2 bg-red-950 hover:bg-red-900 border border-red-800 text-red-200 text-[10px] font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer shadow-lg shrink-0"
+            >
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              Stop Lab
+            </button>
+          )}
+        </div>
       </header>
 
-      {/* Model Selection Panel */}
       <div className="p-4 bg-neutral-900/40 border-b border-neutral-900 shrink-0 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-bold text-neutral-500 uppercase tracking-widest">Selected Models ({selectedModels.length}/3)</span>
+          <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Selected Models ({selectedModels.length}/3)</span>
           <div className="flex flex-wrap gap-2">
             {selectedModels.map((modelId) => {
               const modelInfo = textModels.find((m) => m.id === modelId);
               return (
                 <div
                   key={modelId}
-                  className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-[#0d0d0d] border border-neutral-800 rounded-lg text-xs font-semibold"
+                  className="flex items-center gap-1.5 pl-3 pr-2 py-1.5 bg-[#0d0d0d] border border-neutral-850 rounded-lg text-[10px] font-semibold text-neutral-300"
                 >
-                  <span className="text-neutral-300 truncate max-w-[180px]">{modelInfo?.name || modelId}</span>
+                  <span className="truncate max-w-[150px]">{modelInfo?.name || modelId}</span>
                   <button
                     onClick={() => handleRemoveModel(modelId)}
                     disabled={isAnyGenerating}
@@ -215,33 +361,48 @@ export default function CompareLab() {
           </div>
         </div>
 
-        {selectedModels.length < 3 && (
-          <div className="relative">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Repeat Runs</span>
             <select
+              value={repeatCount}
+              onChange={(e) => setRepeatCount(parseInt(e.target.value))}
               disabled={isAnyGenerating}
-              onChange={(e) => {
-                if (e.target.value) {
-                  handleAddModel(e.target.value);
-                  e.target.value = ""; // reset
-                }
-              }}
-              className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-900 border border-neutral-800 focus:border-[#76b900] text-xs font-semibold rounded-lg text-neutral-300 transition-all outline-none cursor-pointer"
+              className="px-2.5 py-1 bg-neutral-950 border border-neutral-850 text-xs font-semibold rounded-lg text-neutral-300 outline-none cursor-pointer focus:border-[#76b900]/40 transition"
             >
-              <option value="">+ Add Model to Compare</option>
-              {textModels
-                .filter((m) => !selectedModels.includes(m.id))
-                .map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
+              <option value={1}>1 Run (Default)</option>
+              <option value={3}>3 Runs (Average)</option>
+              <option value={5}>5 Runs (Average)</option>
             </select>
           </div>
-        )}
+
+          {selectedModels.length < 3 && (
+            <div className="relative">
+              <select
+                disabled={isAnyGenerating}
+                onChange={(e) => {
+                  if (e.target.value) {
+                    handleAddModel(e.target.value);
+                    e.target.value = ""; // reset
+                  }
+                }}
+                className="px-3 py-1.5 bg-neutral-950 hover:bg-neutral-900 border border-neutral-850 focus:border-[#76b900]/40 text-xs font-semibold rounded-lg text-neutral-300 transition-all outline-none cursor-pointer"
+              >
+                <option value="">+ Add Model</option>
+                {textModels
+                  .filter((m) => !selectedModels.includes(m.id))
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.name.split("/").pop()}
+                    </option>
+                  ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Main Workspace split */}
-      <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative">
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden w-full relative min-h-0">
         {comparisons.length === 0 ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center my-auto">
             <div className="w-16 h-16 bg-[#76b900]/10 border border-[#76b900]/25 rounded-2xl flex items-center justify-center mb-4 text-[#76b900]">
@@ -256,7 +417,7 @@ export default function CompareLab() {
                 <button
                   key={idx}
                   onClick={() => setPrompt(p.text)}
-                  className="px-4 py-2 border border-neutral-800 bg-[#0c0c0c] hover:bg-neutral-900 rounded-lg text-xs text-neutral-400 hover:text-white transition cursor-pointer"
+                  className="px-4 py-2 border border-neutral-850 bg-[#0c0c0c] hover:bg-neutral-900 rounded-lg text-xs text-neutral-400 hover:text-white transition cursor-pointer"
                 >
                   {p.title}
                 </button>
@@ -264,23 +425,25 @@ export default function CompareLab() {
             </div>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col md:flex-row overflow-y-auto md:overflow-y-hidden divide-y md:divide-y-0 md:divide-x divide-neutral-900">
+          <div className="flex-grow flex flex-col md:flex-row overflow-y-auto md:overflow-y-hidden divide-y md:divide-y-0 md:divide-x divide-neutral-900 min-h-0">
             {comparisons.map((c) => {
               const hasTTFTWinner = c.metrics && c.metrics.ttft === bestMetrics.lowestTTFT;
               const hasTPSWinner = c.metrics && c.metrics.tps === bestMetrics.highestTPS;
               const hasLatencyWinner = c.metrics && c.metrics.totalTime === bestMetrics.lowestLatency;
 
+              const inputTokens = Math.round(prompt.length / 4);
+              const outputTokens = c.metrics?.tokens || 0;
+              const estimatedCost = (inputTokens * 0.00015) / 1000 + (outputTokens * 0.00060) / 1000;
+
               return (
                 <div key={c.modelId} className="flex-1 flex flex-col overflow-hidden min-w-[280px]">
-                  {/* Model header panel */}
-                  <div className="p-4 bg-neutral-950 border-b border-neutral-900 flex flex-col gap-1 select-none">
-                    <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">NIM Node</span>
-                    <span className="text-sm font-bold text-white truncate">{c.name}</span>
-                    <span className="text-[9px] text-neutral-400 truncate max-w-xs font-mono">{c.modelId}</span>
+                  <div className="p-4 bg-neutral-950 border-b border-neutral-900 flex flex-col gap-1 select-none shrink-0">
+                    <span className="text-[9px] font-bold text-neutral-550 uppercase tracking-widest">NIM Node</span>
+                    <span className="text-xs font-bold text-white truncate">{c.name}</span>
+                    <span className="text-[8px] text-neutral-450 truncate max-w-xs font-mono">{c.modelId}</span>
                   </div>
 
-                  {/* Model response output */}
-                  <div className="flex-1 overflow-y-auto p-4 md:p-5 select-text prose prose-invert prose-xs leading-relaxed max-w-none scrollbar-thin bg-neutral-950/20">
+                  <div className="flex-grow overflow-y-auto p-4 md:p-5 select-text prose prose-invert prose-xs leading-relaxed max-w-none scrollbar-thin bg-neutral-950/20 text-xs">
                     {c.error ? (
                       <div className="p-3 bg-red-500/10 border border-red-500/20 text-red-400 text-xs rounded-xl">
                         {c.error}
@@ -297,36 +460,69 @@ export default function CompareLab() {
                     )}
                   </div>
 
-                  {/* Telemetry panel */}
-                  <div className="p-4 border-t border-neutral-900 bg-[#090909] font-mono text-[10px] space-y-2 select-none">
-                    <span className="text-[9px] font-bold text-neutral-500 uppercase tracking-wider block">Performance Metrics</span>
+                  {!c.isGenerating && c.response && (
+                    <div className="p-4 border-t border-neutral-900 bg-[#090909]/40 space-y-2.5 shrink-0">
+                      <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-neutral-500">
+                        <span>Quality Score</span>
+                        <div className="flex gap-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              onClick={() => handleUpdateQuality(c.modelId, star)}
+                              className={`w-3.5 h-3.5 cursor-pointer transition ${
+                                star <= (c.qualityScore || 3)
+                                  ? "text-amber-400 fill-amber-400"
+                                  : "text-neutral-700 hover:text-neutral-500"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <input
+                        type="text"
+                        value={c.notes || ""}
+                        onChange={(e) => handleUpdateNotes(c.modelId, e.target.value)}
+                        placeholder="이 모델의 응답에 대한 평가 메모..."
+                        className="w-full bg-[#0a0a0a] border border-neutral-900 rounded-lg px-2.5 py-1.5 text-[10px] text-neutral-350 focus:border-[#76b900]/40 outline-none transition"
+                      />
+                    </div>
+                  )}
+
+                  <div className="p-4 border-t border-neutral-900 bg-[#090909] font-mono text-[9px] space-y-2 select-none shrink-0">
+                    <span className="text-[8px] font-bold text-neutral-500 uppercase tracking-wider block">Performance Metrics</span>
                     
                     {c.metrics ? (
                       <div className="grid grid-cols-2 gap-1.5 text-neutral-400">
-                        <div className="p-2 bg-neutral-950 rounded border border-neutral-850 flex flex-col">
-                          <span className="text-neutral-500 text-[8px] uppercase">TTFT</span>
-                          <span className={cn("text-white font-bold flex items-center gap-1 mt-0.5", hasTTFTWinner && "text-green-400")}>
+                        <div className="p-1.5 bg-neutral-950 rounded border border-neutral-850 flex flex-col">
+                          <span className="text-neutral-500 text-[7px] uppercase">TTFT</span>
+                          <span className={cn("text-white font-bold flex items-center gap-0.5 mt-0.5", hasTTFTWinner && "text-green-400")}>
                             {c.metrics.ttft} ms
-                            {hasTTFTWinner && <Award className="w-3 h-3 text-green-400 shrink-0" />}
+                            {hasTTFTWinner && <Award className="w-2.5 h-2.5 text-green-400 shrink-0" />}
                           </span>
                         </div>
-                        <div className="p-2 bg-neutral-950 rounded border border-neutral-850 flex flex-col">
-                          <span className="text-neutral-500 text-[8px] uppercase">TPS</span>
-                          <span className={cn("text-white font-bold flex items-center gap-1 mt-0.5", hasTPSWinner && "text-green-400")}>
+                        <div className="p-1.5 bg-neutral-950 rounded border border-neutral-850 flex flex-col">
+                          <span className="text-neutral-500 text-[7px] uppercase">TPS</span>
+                          <span className={cn("text-white font-bold flex items-center gap-0.5 mt-0.5", hasTPSWinner && "text-green-400")}>
                             {c.metrics.tps}
-                            {hasTPSWinner && <Zap className="w-3 h-3 text-green-400 shrink-0" />}
+                            {hasTPSWinner && <Zap className="w-2.5 h-2.5 text-green-400 shrink-0" />}
                           </span>
                         </div>
-                        <div className="p-2 bg-neutral-950 rounded border border-neutral-850 flex flex-col col-span-2">
-                          <span className="text-neutral-500 text-[8px] uppercase">Overall Latency</span>
-                          <span className={cn("text-white font-bold flex items-center gap-1 mt-0.5", hasLatencyWinner && "text-green-400")}>
+                        <div className="p-1.5 bg-neutral-950 rounded border border-neutral-850 flex flex-col">
+                          <span className="text-neutral-500 text-[7px] uppercase">Overall Latency</span>
+                          <span className={cn("text-white font-bold flex items-center gap-0.5 mt-0.5", hasLatencyWinner && "text-green-400")}>
                             {(c.metrics.totalTime / 1000).toFixed(2)} s
-                            {hasLatencyWinner && <Clock className="w-3 h-3 text-green-400 shrink-0" />}
+                            {hasLatencyWinner && <Clock className="w-2.5 h-2.5 text-green-400 shrink-0" />}
+                          </span>
+                        </div>
+                        <div className="p-1.5 bg-neutral-950 rounded border border-neutral-850 flex flex-col">
+                          <span className="text-neutral-550 text-[7px] uppercase">Estimated Cost</span>
+                          <span className="text-[#76b900] font-bold mt-0.5">
+                            ${estimatedCost.toFixed(5)}
                           </span>
                         </div>
                       </div>
                     ) : (
-                      <div className="py-6 text-center text-neutral-600 italic">
+                      <div className="py-6 text-center text-neutral-655 italic">
                         {c.isGenerating ? "Gathering telemetry..." : "No metrics available"}
                       </div>
                     )}
@@ -338,7 +534,6 @@ export default function CompareLab() {
         )}
       </div>
 
-      {/* Footer / Input Area */}
       <footer className="p-5 border-t border-neutral-900 bg-neutral-950 shrink-0">
         <div className="max-w-4xl mx-auto flex flex-col gap-3">
           <div className="flex gap-2">
@@ -348,7 +543,7 @@ export default function CompareLab() {
               placeholder="모델들을 비교할 프롬프트를 입력해 주세요..."
               disabled={isAnyGenerating}
               rows={2}
-              className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-sm text-white placeholder-neutral-500 focus:border-[#76b900] focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              className="flex-1 bg-neutral-900 border border-neutral-800 rounded-xl px-4 py-3 text-xs text-white placeholder-neutral-500 focus:border-[#76b900] focus:outline-none resize-none disabled:opacity-50 disabled:cursor-not-allowed transition-all"
             />
             <button
               onClick={handleRunComparison}

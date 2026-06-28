@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { X, Check, Copy, Code2, Terminal, FileJson } from "lucide-react";
+import { X, Check, Copy, Code2 } from "lucide-react";
 import { ChatSession, Message } from "../types";
 
 interface CodeExportModalProps {
@@ -10,14 +10,19 @@ interface CodeExportModalProps {
   apiKey: string;
 }
 
+type TabType = "curl" | "python" | "nodejs" | "langchain" | "llamaindex" | "fastapi" | "react" | "docker" | "json";
+
 export default function CodeExportModal({ isOpen, onClose, session, messages, apiKey }: CodeExportModalProps) {
-  const [activeTab, setActiveTab] = useState<"curl" | "python" | "nodejs" | "json">("curl");
+  const [activeTab, setActiveTab] = useState<TabType>("curl");
   const [copied, setCopied] = useState(false);
 
   if (!isOpen) return null;
 
   const endpoint = "https://integrate.api.nvidia.com/v1/chat/completions";
-  const authKey = apiKey || "YOUR_API_KEY";
+  const envKeyPython = `os.environ.get("NVIDIA_API_KEY", "YOUR_API_KEY")`;
+  const envKeyJS = `process.env.NVIDIA_API_KEY || "YOUR_API_KEY"`;
+  
+  const lastUserMsg = [...messages].reverse().find(m => m.role === "user")?.content || "Hello, NVIDIA NIM!";
 
   const payload = {
     model: session.model,
@@ -41,17 +46,18 @@ export default function CodeExportModal({ isOpen, onClose, session, messages, ap
     switch (activeTab) {
       case "curl":
         return `curl -i -X POST ${endpoint} \\
-  -H "Authorization: Bearer ${authKey}" \\
+  -H "Authorization: Bearer $NVIDIA_API_KEY" \\
   -H "Accept: application/json" \\
   -H "Content-Type: application/json" \\
   -d '${jsonStr}'`;
 
       case "python":
-        return `import openai
+        return `import os
+import openai
 
 client = openai.OpenAI(
   base_url="https://integrate.api.nvidia.com/v1",
-  api_key="${authKey}"
+  api_key=${envKeyPython}
 )
 
 completion = client.chat.completions.create(
@@ -72,7 +78,7 @@ for chunk in completion:
         return `import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: '${authKey}',
+  apiKey: ${envKeyJS},
   baseURL: 'https://integrate.api.nvidia.com/v1',
 });
 
@@ -92,6 +98,131 @@ async function main() {
 }
 
 main();`;
+
+      case "langchain":
+        return `import os
+from langchain_nvidia_ai_endpoints import ChatNVIDIA
+
+# Ensure NVIDIA_API_KEY env is set: export NVIDIA_API_KEY="nvapi-..."
+llm = ChatNVIDIA(
+    model="${session.model}",
+    temperature=${payload.temperature},
+    max_tokens=${payload.max_tokens}
+)
+
+response = llm.invoke("${lastUserMsg.replace(/"/g, '\\"')}")
+print(response.content)
+`;
+
+      case "llamaindex":
+        return `import os
+from llama_index.llms.nvidia import NVIDIA
+
+# Ensure NVIDIA_API_KEY env is set: export NVIDIA_API_KEY="nvapi-..."
+llm = NVIDIA(
+    model="${session.model}",
+    temperature=${payload.temperature},
+    max_tokens=${payload.max_tokens}
+)
+
+response = llm.complete("${lastUserMsg.replace(/"/g, '\\"')}")
+print(response.text)
+`;
+
+      case "fastapi":
+        return `import os
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+import openai
+
+app = FastAPI(title="NVIDIA NIM API Server")
+
+client = openai.OpenAI(
+  base_url="https://integrate.api.nvidia.com/v1",
+  api_key=os.environ.get("NVIDIA_API_KEY", "YOUR_API_KEY")
+)
+
+class QueryPayload(BaseModel):
+    prompt: str
+
+@app.post("/v1/chat")
+async def chat_endpoint(payload: QueryPayload):
+    try:
+        completion = client.chat.completions.create(
+            model="${session.model}",
+            messages=[{"role": "user", "content": payload.prompt}],
+            temperature=${payload.temperature}
+        )
+        return {"result": completion.choices[0].message.content}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+`;
+
+      case "react":
+        return `import React, { useState } from 'react';
+
+export default function NIMClientComponent() {
+  const [response, setResponse] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const runQuery = async (userPrompt) => {
+    setLoading(true);
+    try {
+      const res = await fetch('${endpoint}', {
+        method: 'POST',
+        headers: {
+          'Authorization': \`Bearer \${${envKeyJS}}\`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          model: '${session.model}',
+          messages: [{ role: 'user', content: userPrompt }],
+          temperature: ${payload.temperature},
+          max_tokens: ${payload.max_tokens}
+        })
+      });
+      const data = await res.json();
+      setResponse(data.choices[0]?.message?.content || '');
+    } catch (err) {
+      console.error("NIM Request failed", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div style={{ padding: '16px', background: '#0a0a0a', border: '1px solid #222', borderRadius: '8px' }}>
+      <button onClick={() => runQuery("${lastUserMsg.replace(/"/g, '\\"')}")} disabled={loading} style={{ background: '#76b900', color: '#000', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>
+        {loading ? 'Generating...' : 'Invoke NIM'}
+      </button>
+      <div style={{ marginTop: '12px', color: '#ccc', fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap' }}>
+        {response}
+      </div>
+    </div>
+  );
+}`;
+
+      case "docker":
+        return `# Build a Python-based NIM microservice runtime container
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir openai fastapi uvicorn pydantic
+
+COPY . /app
+
+# Supply API Key via runtime environments
+ENV NVIDIA_API_KEY=""
+
+EXPOSE 8000
+
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+`;
 
       case "json":
         return jsonStr;
@@ -120,18 +251,23 @@ main();`;
         </div>
 
         <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex px-5 pt-4 gap-4 border-b border-neutral-900 justify-between items-center bg-[#080808]/40">
-            <div className="flex gap-5">
+          <div className="flex px-5 pt-4 gap-4 border-b border-neutral-900 justify-between items-center bg-[#080808]/40 overflow-x-auto scrollbar-thin">
+            <div className="flex gap-4 shrink-0">
               {[
                 { id: "curl", label: "cURL" },
-                { id: "python", label: "Python" },
-                { id: "nodejs", label: "Node.js" },
-                { id: "json", label: "JSON Payload" }
+                { id: "python", label: "Python SDK" },
+                { id: "nodejs", label: "NodeJS" },
+                { id: "langchain", label: "LangChain" },
+                { id: "llamaindex", label: "LlamaIndex" },
+                { id: "fastapi", label: "FastAPI" },
+                { id: "react", label: "React" },
+                { id: "docker", label: "Dockerfile" },
+                { id: "json", label: "JSON" }
               ].map(tab => (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={`pb-3 text-xs font-bold uppercase tracking-widest transition-all duration-300 border-b-2 cursor-pointer ${
+                  onClick={() => setActiveTab(tab.id as TabType)}
+                  className={`pb-3 text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border-b-2 cursor-pointer ${
                     activeTab === tab.id
                       ? "text-white border-[#76b900] drop-shadow-[0_0_8px_rgba(118,185,0,0.2)]"
                       : "text-neutral-500 border-transparent hover:text-neutral-300"
@@ -151,7 +287,7 @@ main();`;
                 a.download = `chat-${session.id}.md`;
                 a.click();
               }}
-              className="pb-3 text-xs font-bold text-[#76b900] hover:text-[#66a000] uppercase tracking-widest transition flex items-center gap-1.5 cursor-pointer"
+              className="pb-3 text-[10px] font-bold text-[#76b900] hover:text-[#66a000] uppercase tracking-widest transition flex items-center gap-1.5 cursor-pointer shrink-0"
             >
               Export Chat (.md)
             </button>

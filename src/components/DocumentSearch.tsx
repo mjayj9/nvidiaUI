@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { useToast } from "../context/ToastContext";
 
 interface DocItem {
   id: string;
@@ -24,6 +25,7 @@ interface Citation {
 
 export default function DocumentSearch() {
   const { apiKey } = useWorkspace();
+  const { toast } = useToast();
   const [documents, setDocuments] = useState<DocItem[]>([]);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -266,11 +268,55 @@ export default function DocumentSearch() {
   const handleQuerySubmit = async () => {
     if (!query.trim() || isLoading) return;
     if (selectedDocIds.length === 0) {
-      alert("Please select at least one document to search.");
+      toast("검색할 문서를 최소 하나 이상 선택해 주세요.", "error");
       return;
     }
+
     if (!apiKey) {
-      alert("Please configure your NVIDIA API Key in Settings.");
+      setIsLoading(true);
+      setAnswer("");
+      setCitations([]);
+
+      setTimeout(() => {
+        const localDocsStr = localStorage.getItem("nim_local_rag_documents") || "[]";
+        let localDocs = [];
+        try {
+          localDocs = JSON.parse(localDocsStr);
+          if (!Array.isArray(localDocs)) localDocs = [];
+        } catch (err) {}
+        const selectedDocs = localDocs.filter((d: any) => selectedDocIds.includes(d.id));
+        const docNames = selectedDocs.map(d => d.name).join(", ") || "샘플_가이드라인.pdf";
+
+        const demoAnswer = `[NVIDIA NIM 데모 모드 안내]
+선택된 문서(${docNames})에 대한 분석 결과입니다.
+
+NIM(NVIDIA Inference Microservices)을 이용한 고성능 RAG 파이프라인 최적화에 따르면:
+1. **문서 임베딩 최적화**: NVIDIA NeMo Retriever NIM을 결합하여 컨텍스트 일치율을 최대 85% 이상 개선할 수 있습니다.
+2. **응답 속도 개선**: 일반 로컬 RAG와 비교했을 때, NIM 기반 추론 프레임워크는 TensorRT-LLM 엔진을 활용하여 문서 참조 시의 TTFT(첫 토큰 생성 시간)를 4배 이상 줄여줍니다.
+3. **보안성**: 의료 기록이나 기업 비밀 문서의 경우 self-hosted NIM 온프레미스 배포를 통해 데이터를 완전히 로컬 환경에 유지한 채 안전한 검색 및 대화 성능을 구현합니다.
+
+*실제 API Key를 등록하시면 이 문서에서 정확한 텍스트 단락을 임베딩하고 검색(Vector Search)하여 실제 모델이 도출한 정확한 답변과 인용(Citation)을 확인하실 수 있습니다.*`;
+
+        const demoCitations = selectedDocs.map((doc, idx) => ({
+          docName: doc.name,
+          text: doc.content?.substring(0, 150) + "..." || "문서 본문 내용 샘플 요약 데이터입니다.",
+          score: 0.95,
+          index: idx + 1
+        }));
+
+        if (demoCitations.length === 0) {
+          demoCitations.push({
+            docName: "샘플_가이드라인.pdf",
+            text: "NVIDIA NIM을 활용한 초고속 RAG 아키텍처 가이드. 온프레미스 기업 보안 요건을 충족하기 위한 Docker 배포 가이드라인 제공.",
+            score: 0.95,
+            index: 1
+          });
+        }
+
+        setAnswer(demoAnswer);
+        setCitations(demoCitations);
+        setIsLoading(false);
+      }, 1000);
       return;
     }
 
@@ -693,15 +739,15 @@ ${contextText}`;
               placeholder={
                 apiKey
                   ? `Search inside the ${selectedDocIds.length} active documents...`
-                  : "Please configure your API key in Settings..."
+                  : "현재 데모 체험 모드입니다. 문서 검색 질문을 입력하세요..."
               }
-              disabled={!apiKey || isLoading}
+              disabled={isLoading}
               className="w-full bg-transparent resize-none overflow-y-auto px-3 py-2.5 outline-none text-sm text-neutral-200 placeholder-neutral-500 disabled:opacity-50 min-h-[48px] max-h-[160px] scrollbar-thin"
               rows={1}
             />
             <button
               onClick={handleQuerySubmit}
-              disabled={!query.trim() || !apiKey || isLoading}
+              disabled={!query.trim() || isLoading}
               className="w-10 h-10 rounded-xl bg-neutral-800 disabled:opacity-50 flex items-center justify-center text-white hover:bg-neutral-700 hover:text-[#76b900] transition shrink-0"
             >
               {isLoading ? (
