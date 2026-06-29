@@ -23,6 +23,8 @@ export default function Sidebar({
     handleDeleteSession,
     isDevMode,
     setIsDevMode,
+    language,
+    setLanguage,
   } = useWorkspace();
 
   const onSelectSession = (id: string) => {
@@ -50,27 +52,27 @@ export default function Sidebar({
 
   const navItems = isDevMode
     ? [
-        { id: "dashboard", label: "대시보드 (Dashboard)", icon: Home },
-        { id: "chat", label: "챗 플레이그라운드 (Chat)", icon: MessageSquare },
-        { id: "model-registry", label: "모델 등록소 (Registry)", icon: Cpu },
-        { id: "compare-lab", label: "비교 실험실 (Compare)", icon: GitCompare },
-        { id: "tournament-arena", label: "토너먼트 아레나 (Arena)", icon: Trophy },
-        { id: "request-inspector", label: "요청 검사기 (Inspector)", icon: Activity },
-        { id: "eval-set", label: "프롬프트 평가 (Eval Set)", icon: Award },
-        { id: "safety", label: "보안 가드레일 (Safety)", icon: ShieldAlert },
-        { id: "logs", label: "로그 및 추적 (Logs)", icon: Activity },
-        { id: "deployment", label: "배포 마법사 (Deploy)", icon: Server },
-        { id: "settings", label: "설정 (Settings)", icon: Server },
+        { id: "dashboard", label: language === "ko" ? "대시보드 (Dashboard)" : "Dashboard (Mission Control)", icon: Home },
+        { id: "chat", label: language === "ko" ? "챗 플레이그라운드 (Chat)" : "Chat Playground", icon: MessageSquare },
+        { id: "model-registry", label: language === "ko" ? "모델 등록소 (Registry)" : "Model Registry", icon: Cpu },
+        { id: "compare-lab", label: language === "ko" ? "비교 실험실 (Compare)" : "Compare Lab", icon: GitCompare },
+        { id: "tournament-arena", label: language === "ko" ? "토너먼트 아레나 (Arena)" : "Tournament Arena", icon: Trophy },
+        { id: "request-inspector", label: language === "ko" ? "요청 검사기 (Inspector)" : "Request Inspector", icon: Activity },
+        { id: "eval-set", label: language === "ko" ? "프롬프트 평가 (Eval Set)" : "Prompt & Eval Set", icon: Award },
+        { id: "safety", label: language === "ko" ? "보안 가드레일 (Safety)" : "Safety Pipeline", icon: ShieldAlert },
+        { id: "logs", label: language === "ko" ? "로그 및 추적 (Logs)" : "Logs / Traces", icon: Activity },
+        { id: "deployment", label: language === "ko" ? "배포 마법사 (Deploy)" : "Deployment Wizard", icon: Server },
+        { id: "settings", label: language === "ko" ? "설정 (Settings)" : "Settings", icon: Server },
       ]
     : [
-        { id: "dashboard", label: "홈 (Home)", icon: Home },
-        { id: "chat", label: "AI 채팅 (Chat)", icon: MessageSquare },
-        { id: "rag", label: "문서 질의 (Ask Docs)", icon: Database },
-        { id: "vision", label: "이미지 분석 (Analyze)", icon: Eye },
-        { id: "image-gen", label: "이미지 생성 (Create)", icon: ImageIcon },
-        { id: "speech-video", label: "음성/영상 도구 (AV Tools)", icon: Mic },
-        { id: "saved-works", label: "내 작업함 (Gallery)", icon: FolderHeart },
-        { id: "settings", label: "설정 (Settings)", icon: Server },
+        { id: "dashboard", label: language === "ko" ? "홈 (Home)" : "Home", icon: Home },
+        { id: "chat", label: language === "ko" ? "AI 채팅 (Chat)" : "AI Chat", icon: MessageSquare },
+        { id: "rag", label: language === "ko" ? "문서 질의 (Ask Docs)" : "Ask Documents", icon: Database },
+        { id: "vision", label: language === "ko" ? "이미지 분석 (Analyze)" : "Analyze Images", icon: Eye },
+        { id: "image-gen", label: language === "ko" ? "이미지 생성 (Create)" : "Create Images", icon: ImageIcon },
+        { id: "speech-video", label: language === "ko" ? "음성/영상 도구 (AV Tools)" : "Speech & Video Hub", icon: Mic },
+        { id: "saved-works", label: language === "ko" ? "내 작업함 (Gallery)" : "Saved Gallery", icon: FolderHeart },
+        { id: "settings", label: language === "ko" ? "설정 (Settings)" : "Settings", icon: Server },
       ];
 
   if (!isOpen) return null;
@@ -112,7 +114,7 @@ export default function Sidebar({
               !isDevMode ? "text-black" : "text-neutral-550 hover:text-neutral-350"
             )}
           >
-            AI 서비스 사용
+            {language === "ko" ? "AI 서비스 사용" : "Use AI"}
           </button>
           
           <button
@@ -122,7 +124,33 @@ export default function Sidebar({
               isDevMode ? "text-black" : "text-neutral-550 hover:text-neutral-350"
             )}
           >
-            NIM 개발 빌드
+            {language === "ko" ? "NIM 개발 빌드" : "Build with NIM"}
+          </button>
+        </div>
+      </div>
+
+      {/* Language Switcher */}
+      <div className="px-4 pb-3 border-b border-neutral-900 bg-[#080808]/80 select-none shrink-0 flex items-center justify-between text-[9px] font-bold text-neutral-500">
+        <span>{language === "ko" ? "인터페이스 언어" : "UI LANGUAGE"}:</span>
+        <div className="flex gap-1.5 items-center">
+          <button
+            onClick={() => setLanguage("ko")}
+            className={cn(
+              "px-1.5 py-0.5 rounded transition cursor-pointer text-[9px]",
+              language === "ko" ? "bg-[#76b900]/10 border border-[#76b900]/30 text-[#76b900]" : "text-neutral-550 hover:text-neutral-350"
+            )}
+          >
+            한국어
+          </button>
+          <span className="text-neutral-850">|</span>
+          <button
+            onClick={() => setLanguage("en")}
+            className={cn(
+              "px-1.5 py-0.5 rounded transition cursor-pointer text-[9px]",
+              language === "en" ? "bg-[#76b900]/10 border border-[#76b900]/30 text-[#76b900]" : "text-neutral-550 hover:text-neutral-350"
+            )}
+          >
+            English
           </button>
         </div>
       </div>
@@ -154,7 +182,7 @@ export default function Sidebar({
                     className="w-full flex items-center gap-2 px-2 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-white rounded text-[10px] font-semibold transition mb-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    새 대화 시작
+                    {language === "ko" ? "새 대화 시작" : "New Conversation"}
                   </button>
                   <div className="max-h-48 overflow-y-auto space-y-0.5 scrollbar-thin pr-1">
                     {sessions.map((session) => (
@@ -213,7 +241,7 @@ export default function Sidebar({
           className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-neutral-400 hover:text-red-400 hover:bg-neutral-900 rounded-lg transition"
         >
           <LogOut className="w-4 h-4" />
-          로그아웃 (Sign out)
+          {language === "ko" ? "로그아웃 (Sign out)" : "Sign out"}
         </button>
       </div>
     </div>

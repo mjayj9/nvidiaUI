@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FolderHeart, Star, Share2, FileDown, Play, Trash2, Calendar, FileText, Image as ImageIcon, MessageSquare, Mic, Video, Search, GitCompare, Award } from "lucide-react";
 import { useToast } from "../context/ToastContext";
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface SavedWorkItem {
   id: string;
@@ -20,6 +21,7 @@ export default function SavedWorks({
   onNavigate: (tab: string) => void;
 }) {
   const { toast } = useToast();
+  const { language } = useWorkspace();
   const [works, setWorks] = useState<SavedWorkItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -89,16 +91,22 @@ export default function SavedWorks({
     const updated = works.map((w) => (w.id === id ? { ...w, isFavorite: !w.isFavorite } : w));
     saveToStorage(updated);
     const item = updated.find((w) => w.id === id);
-    toast(item?.isFavorite ? "즐겨찾기에 등록되었습니다." : "즐겨찾기에서 해제되었습니다.", "success");
+    const msg = item?.isFavorite 
+      ? (language === "ko" ? "즐겨찾기에 등록되었습니다." : "Added to favorites.")
+      : (language === "ko" ? "즐겨찾기에서 해제되었습니다." : "Removed from favorites.");
+    toast(msg, "success");
   };
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (confirm("해당 작업 기록을 내 작업함에서 삭제하시겠습니까?")) {
+    const confirmMsg = language === "ko"
+      ? "해당 작업 기록을 내 작업함에서 삭제하시겠습니까?"
+      : "Are you sure you want to delete this record from the gallery?";
+    if (confirm(confirmMsg)) {
       const updated = works.filter((w) => w.id !== id);
       saveToStorage(updated);
       if (activeItem?.id === id) setActiveItem(null);
-      toast("삭제되었습니다.", "success");
+      toast(language === "ko" ? "삭제되었습니다." : "Deleted successfully.", "success");
     }
   };
 
@@ -106,18 +114,27 @@ export default function SavedWorks({
     e.stopPropagation();
     const dummyShareUrl = `${window.location.origin}/share/work/${item.id}`;
     navigator.clipboard.writeText(dummyShareUrl);
-    toast("공유 가능한 고유 링크가 클립보드에 복사되었습니다!", "success");
+    toast(language === "ko" ? "공유 가능한 고유 링크가 클립보드에 복사되었습니다!" : "Shareable link copied to clipboard!", "success");
   };
 
   const handleRerun = (item: SavedWorkItem) => {
+    let targetTab = item.type as string;
+    if (targetTab === "speech" || targetTab === "video") {
+      targetTab = "speech-video";
+    } else if (targetTab === "compare") {
+      targetTab = "compare-lab";
+    } else if (targetTab === "eval") {
+      targetTab = "eval-set";
+    }
+
     // Write rerun payload to localStorage so target component can read on mount
     localStorage.setItem("nim_rerun_data", JSON.stringify({
       tab: item.type,
       params: item.params
     }));
     // Navigate to target component
-    onNavigate(item.type);
-    toast("이 작업 결과로 다시 실행을 개시합니다...", "success");
+    onNavigate(targetTab);
+    toast(language === "ko" ? "이 작업 결과로 다시 실행을 개시합니다..." : "Rerunning with this saved context...", "success");
   };
 
   const handleExportMarkdown = (item: SavedWorkItem) => {
@@ -128,7 +145,7 @@ export default function SavedWorks({
     a.href = url;
     a.download = `${item.title.replace(/\s+/g, "_")}.md`;
     a.click();
-    toast("Markdown 파일이 다운로드되었습니다.", "success");
+    toast(language === "ko" ? "Markdown 파일이 다운로드되었습니다." : "Markdown file downloaded.", "success");
   };
 
   const handleExportPDF = (item: SavedWorkItem) => {
@@ -165,16 +182,18 @@ export default function SavedWorks({
       <div className="w-full md:w-96 border-r border-neutral-900 flex flex-col h-1/2 md:h-full shrink-0 bg-[#060606]">
         <div className="p-4 border-b border-neutral-900 flex items-center gap-2 bg-[#080808]">
           <FolderHeart className="w-4 h-4 text-[#76b900]" />
-          <span className="text-xs font-bold uppercase tracking-wider text-white">내 작업함 (Gallery)</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-white">
+            {language === "ko" ? "내 작업함 (Gallery)" : "My Gallery"}
+          </span>
         </div>
 
         {/* Filter controls */}
         <div className="p-3 border-b border-neutral-900 space-y-2">
           <div className="relative flex items-center bg-[#0a0a0a] border border-neutral-850 rounded-xl px-3 py-1.5 text-xs">
-            <Search className="w-3.5 h-3.5 text-neutral-500 mr-2 shrink-0" />
+            <Search className="w-3.5 h-3.5 text-neutral-550 mr-2 shrink-0" />
             <input
               type="text"
-              placeholder="내 작업 검색..."
+              placeholder={language === "ko" ? "내 작업 검색..." : "Search saved works..."}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="bg-transparent text-neutral-200 outline-none w-full placeholder-neutral-600"
@@ -185,17 +204,17 @@ export default function SavedWorks({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="bg-[#0b0b0b] border border-neutral-850 rounded-lg px-2.5 py-1 text-[10px] text-neutral-400 focus:border-[#76b900]/40 outline-none transition"
+              className="bg-[#0b0b0b] border border-neutral-850 rounded-lg px-2.5 py-1 text-[10px] text-neutral-400 focus:border-[#76b900]/40 outline-none transition cursor-pointer"
             >
-              <option value="all">전체 도구 결과</option>
-              <option value="chat">AI 채팅</option>
-              <option value="rag">문서 질문</option>
-              <option value="vision">이미지 분석</option>
-              <option value="image-gen">이미지 생성</option>
-              <option value="speech">음성 도구</option>
-              <option value="video">영상 도구</option>
-              <option value="compare">비교 실험실 (Compare)</option>
-              <option value="eval">프롬프트 평가 (Eval)</option>
+              <option value="all">{language === "ko" ? "전체 도구 결과" : "All Results"}</option>
+              <option value="chat">{language === "ko" ? "AI 채팅" : "AI Chat"}</option>
+              <option value="rag">{language === "ko" ? "문서 질문" : "Ask Docs"}</option>
+              <option value="vision">{language === "ko" ? "이미지 분석" : "Analyze Images"}</option>
+              <option value="image-gen">{language === "ko" ? "이미지 생성" : "Create Images"}</option>
+              <option value="speech">{language === "ko" ? "음성 도구" : "Speech Hub"}</option>
+              <option value="video">{language === "ko" ? "영상 도구" : "Video Studio"}</option>
+              <option value="compare">{language === "ko" ? "비교 실험실 (Compare)" : "Compare Lab"}</option>
+              <option value="eval">{language === "ko" ? "프롬프트 평가 (Eval)" : "Prompt Eval"}</option>
             </select>
 
             <button
@@ -207,7 +226,7 @@ export default function SavedWorks({
               }`}
             >
               <Star className={`w-3 h-3 ${showOnlyFavorites ? "fill-[#76b900]" : ""}`} />
-              즐겨찾기만
+              {language === "ko" ? "즐겨찾기만" : "Favorites"}
             </button>
           </div>
         </div>
@@ -217,7 +236,7 @@ export default function SavedWorks({
           {filteredWorks.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-neutral-650 text-xs">
               <FolderHeart className="w-8 h-8 opacity-20 mb-2" />
-              <span>저장된 작업물이 없습니다.</span>
+              <span>{language === "ko" ? "저장된 작업물이 없습니다." : "No saved works found."}</span>
             </div>
           ) : (
             filteredWorks.map((item) => {
@@ -237,18 +256,26 @@ export default function SavedWorks({
                   <div className="flex justify-between items-center gap-2">
                     <span className="text-[8px] font-bold text-neutral-550 uppercase tracking-widest flex items-center gap-1">
                       <Icon className="w-2.5 h-2.5 text-[#76b900] shrink-0" />
-                      {item.type}
+                      {item.type === "chat" ? (language === "ko" ? "AI 채팅" : "AI Chat") :
+                       item.type === "rag" ? (language === "ko" ? "문서 질문" : "Ask Docs") :
+                       item.type === "vision" ? (language === "ko" ? "이미지 분석" : "Vision") :
+                       item.type === "image-gen" ? (language === "ko" ? "이미지 생성" : "Image Gen") :
+                       item.type === "speech" ? (language === "ko" ? "음성 도구" : "Speech") :
+                       item.type === "video" ? (language === "ko" ? "영상 도구" : "Video") :
+                       item.type === "compare" ? (language === "ko" ? "비교 분석" : "Compare Lab") :
+                       item.type === "eval" ? (language === "ko" ? "대량 평가" : "Bulk Eval") :
+                       item.type}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <button
                         onClick={(e) => handleToggleFavorite(item.id, e)}
-                        className="text-neutral-500 hover:text-amber-400 p-0.5"
+                        className="text-neutral-500 hover:text-amber-400 p-0.5 cursor-pointer"
                       >
                         <Star className={`w-3.5 h-3.5 ${item.isFavorite ? "fill-amber-400 text-amber-400" : ""}`} />
                       </button>
                       <button
                         onClick={(e) => handleDelete(item.id, e)}
-                        className="text-neutral-600 hover:text-red-400 p-0.5 opacity-0 group-hover:opacity-100 transition"
+                        className="text-neutral-600 hover:text-red-400 p-0.5 opacity-0 group-hover:opacity-100 transition cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -298,21 +325,21 @@ export default function SavedWorks({
                   className="px-3.5 py-1.5 bg-[#76b900] hover:bg-[#66a000] text-black font-bold rounded-lg text-[10px] uppercase tracking-widest transition flex items-center gap-1.5 shadow-[0_4px_12px_rgba(118,185,0,0.15)] cursor-pointer"
                 >
                   <Play className="w-3 h-3 fill-black" />
-                  Rerun Context
+                  {language === "ko" ? "다시 실행 (Rerun)" : "Rerun Context"}
                 </button>
                 <button
                   onClick={(e) => handleShare(activeItem, e)}
                   className="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-300 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest border border-neutral-850 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <Share2 className="w-3 h-3" />
-                  Share Link
+                  {language === "ko" ? "공유 링크 복사" : "Share Link"}
                 </button>
                 <button
                   onClick={() => handleExportMarkdown(activeItem)}
                   className="px-3.5 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-300 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest border border-neutral-850 transition flex items-center gap-1.5 cursor-pointer"
                 >
                   <FileDown className="w-3 h-3" />
-                  Export .MD
+                  {language === "ko" ? "마크다운 내보내기" : "Export .MD"}
                 </button>
               </div>
             </div>
@@ -330,7 +357,9 @@ export default function SavedWorks({
 
             {/* Content Text Block */}
             <div className="space-y-4">
-              <h3 className="text-xs font-bold text-white uppercase tracking-wider">Prompt / Query Input</h3>
+              <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                {language === "ko" ? "입력 프롬프트 / 질문" : "Prompt / Query Input"}
+              </h3>
               <div className="bg-[#0b0b0b] border border-neutral-900 p-4 rounded-xl text-xs leading-relaxed text-neutral-350 italic">
                 "{activeItem.content}"
               </div>
@@ -338,8 +367,10 @@ export default function SavedWorks({
 
             {activeItem.details && (
               <div className="space-y-4">
-                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Detailed Response Output</h3>
-                <div className="bg-[#080808]/60 border border-neutral-900 p-5 rounded-2xl text-xs leading-relaxed text-neutral-300 whitespace-pre-wrap font-mono">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  {language === "ko" ? "상세 생성 결과" : "Detailed Response Output"}
+                </h3>
+                <div className="bg-[#080808]/60 border border-neutral-900 p-5 rounded-2xl text-xs leading-relaxed text-neutral-350 whitespace-pre-wrap font-mono">
                   {activeItem.details}
                 </div>
               </div>
@@ -348,7 +379,11 @@ export default function SavedWorks({
         ) : (
           <div className="flex flex-col items-center justify-center h-96 text-neutral-500 text-xs">
             <FolderHeart className="w-12 h-12 opacity-15 mb-3" />
-            <span>작업 목록에서 결과 카드를 선택하여 상세 요약 및 내보내기 대화상자를 확인해 보세요.</span>
+            <span>
+              {language === "ko"
+                ? "작업 목록에서 결과 카드를 선택하여 상세 요약 및 내보내기 대화상자를 확인해 보세요."
+                : "Select a card from the list to view the detailed summary and export options."}
+            </span>
           </div>
         )}
       </div>

@@ -8,6 +8,7 @@ import {
 } from "firebase/auth";
 import { getFirestore, Firestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
+import { getAnalytics, Analytics, isSupported } from "firebase/analytics";
 
 // 기본 Firebase 구성 값 (nvidiaui-5c838 프로젝트)
 const defaultFirebaseConfig = {
@@ -70,6 +71,20 @@ export const switchToDefaultDatabase = () => {
 };
 
 export const storage = getStorage(app);
+
+export let analytics: Analytics | undefined;
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      analytics = getAnalytics(app);
+      console.log("Firebase Analytics initialized successfully");
+    } else {
+      console.warn("Firebase Analytics is not supported in this environment");
+    }
+  }).catch((err) => {
+    console.error("Failed to check Firebase Analytics support", err);
+  });
+}
 
 export const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider();

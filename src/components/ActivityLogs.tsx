@@ -1,5 +1,6 @@
 import { Activity, Clock, Cpu, FileText, Info, Loader2, RefreshCw } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useWorkspace } from "../context/WorkspaceContext";
 
 interface LogEntry {
   id: string;
@@ -11,6 +12,7 @@ interface LogEntry {
 }
 
 export default function ActivityLogs() {
+  const { language } = useWorkspace();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [filterType, setFilterType] = useState("all");
@@ -39,6 +41,26 @@ export default function ActivityLogs() {
       console.error("Failed to parse local activity logs", err);
     }
 
+    try {
+      const savedSafety = localStorage.getItem("nim_local_safety_logs");
+      if (savedSafety) {
+        const parsedSafety = JSON.parse(savedSafety);
+        if (Array.isArray(parsedSafety)) {
+          const mappedSafety: LogEntry[] = parsedSafety.map((log: any) => ({
+            id: log.id,
+            timestamp: log.timestamp,
+            type: log.safetyRisk === "Blocked" ? "Safety Block" : "Safety Check",
+            model: "Llama-3.1-Nemotron",
+            details: log.maskedInput ? `Scrubbed prompt: "${log.maskedInput}"` : "Safety audit check completed",
+            status: log.safetyRisk === "Blocked" ? "failed" : "success",
+          }));
+          localList = [...localList, ...mappedSafety];
+        }
+      }
+    } catch (err) {
+      console.error("Failed to parse local safety logs", err);
+    }
+
     fetch("/api/safety/logs")
       .then(async (res) => {
         if (res.ok) {
@@ -58,12 +80,20 @@ export default function ActivityLogs() {
           });
           setLogs(merged);
         } else {
-          setLogs(localList);
+          setLogs(localList.sort((a, b) => {
+            const timeA = Date.parse(a.timestamp) || 0;
+            const timeB = Date.parse(b.timestamp) || 0;
+            return timeB - timeA;
+          }));
         }
       })
       .catch((e) => {
-        console.warn("Backend logs unavailable, falling back to local activity logs.");
-        setLogs(localList);
+        console.warn("Backend logs unavailable, falling back to local logs.");
+        setLogs(localList.sort((a, b) => {
+          const timeA = Date.parse(a.timestamp) || 0;
+          const timeB = Date.parse(b.timestamp) || 0;
+          return timeB - timeA;
+        }));
       })
       .finally(() => {
         setIsLoading(false);
@@ -74,6 +104,9 @@ export default function ActivityLogs() {
     if (filterType === "all") return true;
     if (filterType === "success") return log.status === "success";
     if (filterType === "failed") return log.status === "failed";
+    if (filterType === "safety") {
+      return log.type.toLowerCase().includes("safety") || log.type.toLowerCase().includes("block");
+    }
     return log.type.toLowerCase().includes(filterType.toLowerCase());
   });
 
@@ -83,19 +116,21 @@ export default function ActivityLogs() {
       <header className="h-16 border-b border-neutral-900 flex items-center justify-between px-6 shrink-0 bg-neutral-950 z-10">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-[#76b900]" />
-          <span className="text-sm font-semibold text-white">Activity Audit Logs</span>
+          <span className="text-sm font-semibold text-white">
+            {language === "ko" ? "활동 감사 로그 (Activity Logs)" : "Activity Audit Logs"}
+          </span>
         </div>
         <button
           onClick={fetchLogs}
           disabled={isLoading}
-          className="text-xs font-semibold px-3 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-300 rounded-lg border border-neutral-800 transition flex items-center gap-1.5"
+          className="text-xs font-semibold px-3 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-neutral-300 rounded-lg border border-neutral-800 transition flex items-center gap-1.5 cursor-pointer"
         >
           {isLoading ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />
           ) : (
             <RefreshCw className="w-3.5 h-3.5" />
           )}
-          Refresh Log
+          {language === "ko" ? "로그 새로고침" : "Refresh Log"}
         </button>
       </header>
 
@@ -103,7 +138,7 @@ export default function ActivityLogs() {
       <div className="flex-1 overflow-y-auto p-6 md:p-8 max-w-4xl mx-auto w-full scrollbar-thin space-y-6">
         <div className="flex justify-between items-center">
           <span className="text-xs font-bold uppercase tracking-wider text-neutral-500">
-            Chronological Events
+            {language === "ko" ? "시간 순서별 이벤트 기록" : "Chronological Events"}
           </span>
           <div className="flex gap-2 text-xs">
             <select
@@ -111,10 +146,10 @@ export default function ActivityLogs() {
               onChange={(e) => setFilterType(e.target.value)}
               className="bg-neutral-900 border border-neutral-800 rounded-lg px-2.5 py-1 text-white outline-none cursor-pointer hover:border-neutral-700 transition"
             >
-              <option value="all">All Events</option>
-              <option value="success">Success Status Only</option>
-              <option value="failed">Failed Status Only</option>
-              <option value="safety">Safety Alerts Only</option>
+              <option value="all">{language === "ko" ? "전체 이벤트" : "All Events"}</option>
+              <option value="success">{language === "ko" ? "성공 상태만" : "Success Status Only"}</option>
+              <option value="failed">{language === "ko" ? "실패/차단 상태만" : "Failed Status Only"}</option>
+              <option value="safety">{language === "ko" ? "보안 경고만" : "Safety Alerts Only"}</option>
             </select>
           </div>
         </div>
@@ -124,11 +159,11 @@ export default function ActivityLogs() {
           {isLoading && logs.length === 0 ? (
             <div className="text-center py-20 text-neutral-500 text-xs flex flex-col items-center justify-center gap-2">
               <Loader2 className="w-6 h-6 animate-spin text-[#76b900]" />
-              Compiling database entries...
+              {language === "ko" ? "데이터베이스 로그 수집 중..." : "Compiling database entries..."}
             </div>
           ) : filteredLogs.length === 0 ? (
             <div className="text-center py-20 text-neutral-500 text-xs border border-dashed border-neutral-800 rounded-xl">
-              No matching activity events recorded.
+              {language === "ko" ? "기록된 활동 감사 로그가 없습니다." : "No matching activity events recorded."}
             </div>
           ) : (
             filteredLogs.map((log) => (

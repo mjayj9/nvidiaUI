@@ -29,6 +29,8 @@ interface WorkspaceContextType {
   setIsDevMode: (dev: boolean) => void;
   generalPreset: string;
   setGeneralPreset: (preset: string) => void;
+  language: "ko" | "en";
+  setLanguage: (lang: "ko" | "en") => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
@@ -90,6 +92,19 @@ export function WorkspaceProvider({
     }
     return "balanced";
   });
+
+  const [language, setLanguageState] = useState<"ko" | "en">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("nim_language");
+      if (saved === "ko" || saved === "en") return saved;
+    }
+    return "ko";
+  });
+
+  const setLanguage = useCallback((lang: "ko" | "en") => {
+    setLanguageState(lang);
+    localStorage.setItem("nim_language", lang);
+  }, []);
 
   const setGeneralPreset = useCallback((preset: string) => {
     setGeneralPresetState(preset);
@@ -247,6 +262,8 @@ export function WorkspaceProvider({
         setIsDevMode,
         generalPreset,
         setGeneralPreset,
+        language,
+        setLanguage,
       }}
     >
       {children}
