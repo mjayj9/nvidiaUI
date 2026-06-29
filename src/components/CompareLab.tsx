@@ -7,6 +7,8 @@ import { useToast } from "../context/ToastContext";
 import { cn } from "../lib/utils";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { saveWorkToGallery } from "../lib/savedWorksLogger";
+import { logActivity } from "../lib/activityLogger";
 
 interface ModelComparisonState {
   modelId: string;
@@ -44,7 +46,7 @@ export default function CompareLab() {
   });
 
   // Filter only text models
-  const textModels = NIM_MODELS.filter((m) => m.type === "TEXT" || m.capabilities.includes("chat"));
+  const textModels = NIM_MODELS.filter((m) => m.type === "TEXT");
 
   const handleAddModel = (modelId: string) => {
     if (selectedModels.includes(modelId)) {
@@ -190,6 +192,7 @@ export default function CompareLab() {
 
     Promise.all(promises).finally(() => {
       setIsAnyGenerating(false);
+      logActivity("Model Compare Lab", selectedModels.join(", "), `Benchmark run of ${selectedModels.length} models finished with repeat=${repeatCount}.`, "success");
     });
   };
 
@@ -224,6 +227,55 @@ export default function CompareLab() {
     setCompareHistory(updated);
     localStorage.setItem("nim_compare_history", JSON.stringify(updated));
     toast("벤치마크 결과가 로컬 저장소에 보관되었습니다.", "success");
+  };
+
+  const handleSaveToGallery = () => {
+    if (comparisons.length === 0) return;
+    
+    const summaryContent = `모델 비교 결과 요약:\n` + comparisons.map(c => {
+      const tps = c.metrics?.tps ? `${c.metrics.tps.toFixed(1)} tps` : "N/A";
+      return `- ${c.name.split("/").pop()}: 속도 ${tps}, 별점 ${c.qualityScore || 3}점`;
+    }).join("\n");
+    
+    const markdownDetails = `### 비교 분석 벤치마크 결과
+**프롬프트:**
+> ${prompt}
+
+| 모델명 | 첫 토큰 지연 시간 (TTFT) | 초당 토큰 처리량 (TPS) | 응답 품질 별점 |
+| :--- | :--- | :--- | :--- |
+${comparisons.map(c => {
+  const ttft = c.metrics?.ttft ? `${c.metrics.ttft}ms` : "N/A";
+  const tps = c.metrics?.tps ? `${c.metrics.tps.toFixed(1)} tps` : "N/A";
+  const rating = "★".repeat(c.qualityScore || 3) + "☆".repeat(5 - (c.qualityScore || 3));
+  return `| ${c.name.split("/").pop()} | ${ttft} | ${tps} | ${rating} |`;
+}).join("\n")}
+
+**메모:**
+${comparisons.map(c => `- **${c.name.split("/").pop()}**: ${c.notes || "메모 없음"}`).join("\n")}
+`;
+
+    try {
+      saveWorkToGallery({
+        type: "compare",
+        title: `[비교 분석] ${prompt.slice(0, 30)}${prompt.length > 30 ? "..." : ""}`,
+        content: summaryContent,
+        details: markdownDetails,
+        params: {
+          prompt,
+          comparisons: comparisons.map(c => ({
+            modelId: c.modelId,
+            name: c.name,
+            metrics: c.metrics,
+            response: c.response,
+            qualityScore: c.qualityScore || 3,
+            notes: c.notes || ""
+          }))
+        }
+      });
+      toast("벤치마크 분석 결과가 내 작업함(Gallery)에 보관되었습니다.", "success");
+    } catch (e) {
+      toast("내 작업함 저장에 실패했습니다.", "error");
+    }
   };
 
   const handleExportJSON = () => {
@@ -304,6 +356,12 @@ export default function CompareLab() {
         <div className="flex gap-2 shrink-0 flex-wrap">
           {comparisons.length > 0 && (
             <>
+              <button
+                onClick={handleSaveToGallery}
+                className="px-3 py-1.5 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] rounded-lg text-[10px] font-bold uppercase tracking-widest transition cursor-pointer"
+              >
+                내 작업함에 저장
+              </button>
               <button
                 onClick={handleSaveBenchmark}
                 className="px-3 py-1.5 bg-neutral-900 border border-neutral-850 hover:border-neutral-750 text-neutral-300 hover:text-white rounded-lg text-[10px] font-bold uppercase tracking-widest transition cursor-pointer"

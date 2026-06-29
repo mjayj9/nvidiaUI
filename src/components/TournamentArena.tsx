@@ -48,7 +48,7 @@ export default function TournamentArena() {
     return [];
   });
 
-  const textModels = NIM_MODELS.filter((m) => m.type === "TEXT" || m.capabilities.includes("chat"));
+  const textModels = NIM_MODELS.filter((m) => m.type === "TEXT");
 
   const handleStop = () => {
     if (abortControllerARef.current) abortControllerARef.current.abort();

@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { useToast } from "../context/ToastContext";
+import { saveWorkToGallery } from "../lib/savedWorksLogger";
 
 interface DocItem {
   id: string;
@@ -36,6 +37,37 @@ export default function DocumentSearch() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedDocIds, setSelectedDocIds] = useState<string[]>([]);
   const [hoveredCitation, setHoveredCitation] = useState<number | null>(null);
+
+  const handleSaveToGallery = () => {
+    if (!answer) return;
+    
+    const detailsMarkdown = `### 문서 질의 (RAG) 답변 보고서
+**질문:**
+> ${query}
+
+**답변:**
+${answer}
+
+**인용 및 참고 출처:**
+${citations.map((cite, i) => `[${i + 1}] **${cite.docName}** (유사도: ${(cite.score * 100).toFixed(1)}%)\n> ${cite.text}`).join("\n\n")}
+`;
+
+    try {
+      saveWorkToGallery({
+        type: "rag",
+        title: `[문서 RAG] ${query.slice(0, 30)}${query.length > 30 ? "..." : ""}`,
+        content: answer.slice(0, 200) + (answer.length > 200 ? "..." : ""),
+        details: detailsMarkdown,
+        params: {
+          query,
+          citationsCount: citations.length
+        }
+      });
+      toast("문서 RAG 답변이 내 작업함(Gallery)에 보관되었습니다.", "success");
+    } catch (e) {
+      toast("내 작업함 저장에 실패했습니다.", "error");
+    }
+  };
 
   // Load indexed documents on mount
   useEffect(() => {
@@ -607,7 +639,18 @@ ${contextText}`;
                 </div>
 
                 {/* Answer box */}
-                <div className="p-6 nvidia-glass rounded-2xl border border-neutral-850 prose prose-invert max-w-none text-sm md:text-base relative leading-relaxed nvidia-glow">
+                <div className="p-6 nvidia-glass rounded-2xl border border-neutral-850 prose prose-invert max-w-none text-sm md:text-base relative leading-relaxed nvidia-glow flex flex-col gap-3">
+                  <div className="flex justify-between items-center border-b border-neutral-850 pb-2 mb-1">
+                    <span className="text-[10px] text-[#76b900] uppercase tracking-wider font-extrabold">Synthesized NIM Response</span>
+                    {!isLoading && answer && (
+                      <button
+                        onClick={handleSaveToGallery}
+                        className="px-3 py-1 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        내 작업함에 저장
+                      </button>
+                    )}
+                  </div>
                   {isLoading && !answer ? (
                     <div className="flex items-center gap-2 text-neutral-500 py-10 justify-center text-xs">
                       <Loader2 className="w-5 h-5 animate-spin text-[#76b900]" />

@@ -17,30 +17,57 @@ export default function ActivityLogs() {
 
   useEffect(() => {
     fetchLogs();
+
+    if (typeof window !== "undefined") {
+      window.addEventListener("nim_activity_logged", fetchLogs);
+      return () => {
+        window.removeEventListener("nim_activity_logged", fetchLogs);
+      };
+    }
   }, []);
 
-  const fetchLogs = async () => {
+  const fetchLogs = () => {
     setIsLoading(true);
+    let localList: LogEntry[] = [];
+    
     try {
-      const res = await fetch("/api/safety/logs"); // we can share log lists or map our activity entries
-      if (res.ok) {
-        const data = await res.json();
-        // Translate safety check logs to activity entries for visual variety, or parse general logs
-        const mappedLogs: LogEntry[] = data.map((log: any) => ({
-          id: log.id,
-          timestamp: log.timestamp,
-          type: log.safetyRisk === "Blocked" ? "Safety Block" : "AI Inference",
-          model: "Llama-3.1-Nemotron",
-          details: log.maskedInput ? `Scrubbed prompt: "${log.maskedInput}"` : "General request completed",
-          status: log.safetyRisk === "Blocked" ? "failed" : "success",
-        }));
-        setLogs(mappedLogs);
+      const saved = localStorage.getItem("nim_activity_logs");
+      if (saved) {
+        localList = JSON.parse(saved);
       }
-    } catch (e) {
-      console.error("Failed to load logs", e);
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      console.error("Failed to parse local activity logs", err);
     }
+
+    fetch("/api/safety/logs")
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json();
+          const mappedLogs: LogEntry[] = data.map((log: any) => ({
+            id: log.id,
+            timestamp: log.timestamp,
+            type: log.safetyRisk === "Blocked" ? "Safety Block" : "AI Inference",
+            model: "Llama-3.1-Nemotron",
+            details: log.maskedInput ? `Scrubbed prompt: "${log.maskedInput}"` : "General request completed",
+            status: log.safetyRisk === "Blocked" ? "failed" : "success",
+          }));
+          const merged = [...localList, ...mappedLogs].sort((a, b) => {
+            const timeA = Date.parse(a.timestamp) || 0;
+            const timeB = Date.parse(b.timestamp) || 0;
+            return timeB - timeA;
+          });
+          setLogs(merged);
+        } else {
+          setLogs(localList);
+        }
+      })
+      .catch((e) => {
+        console.warn("Backend logs unavailable, falling back to local activity logs.");
+        setLogs(localList);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   };
 
   const filteredLogs = logs.filter((log) => {

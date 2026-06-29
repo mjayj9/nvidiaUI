@@ -4,9 +4,12 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { modelRegistry } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { useToast } from "../context/ToastContext";
+import { saveWorkToGallery } from "../lib/savedWorksLogger";
 
 export default function VideoStudio() {
   const { apiKey } = useWorkspace();
+  const { toast } = useToast();
   const [activeSubTab, setActiveSubTab] = useState<"understanding" | "synthetic">("understanding");
 
   // Common State
@@ -29,6 +32,49 @@ export default function VideoStudio() {
     timeline: { time: string; probability: number }[];
   } | null>(null);
 
+  const handleSaveUnderstandingToGallery = () => {
+    if (!undResult) return;
+    try {
+      saveWorkToGallery({
+        type: "video",
+        title: `[영상 이해] ${videoFile?.name || "분석 비디오"}`,
+        content: undResult.slice(0, 200) + (undResult.length > 200 ? "..." : ""),
+        details: `### 영상 물리 속성 및 내용 분석 (Cosmos)\n**비디오 파일:** ${videoFile?.name || "분석 비디오"}\n\n**상세 피드백:**\n${undResult}`,
+        params: {
+          fileName: videoFile?.name || "uploaded_video.mp4",
+          model: activeModel
+        }
+      });
+      toast("영상 분석 결과가 내 작업함(Gallery)에 보관되었습니다.", "success");
+    } catch (e) {
+      toast("내 작업함 저장에 실패했습니다.", "error");
+    }
+  };
+
+  const handleSaveSyntheticToGallery = () => {
+    if (!synResult) return;
+    try {
+      const summary = `합성 여부: ${synResult.isSynthetic ? "합성 비디오 (Deepfake)" : "실제 촬영 비디오 (Real)"}, 확률: ${synResult.probability.toFixed(1)}%`;
+      const detailsMarkdown = `### 영상 위조 감별 (Deepfake Verification)\n**비디오 파일:** ${videoFile?.name || "분석 비디오"}\n\n**합성 판정 여부:** ${synResult.isSynthetic ? "⚠️ 합성 (Synthetic)" : "✅ 실제 (Real)"}\n**확률:** ${synResult.probability.toFixed(1)}%\n\n**타임라인 프레임 검사:**\n` + 
+        synResult.timeline.map(t => `- **${t.time}**: ${t.probability.toFixed(1)}% 확률로 위조 흔적 검출`).join("\n");
+
+      saveWorkToGallery({
+        type: "video",
+        title: `[딥페이크 감별] ${videoFile?.name || "분석 비디오"}`,
+        content: summary,
+        details: detailsMarkdown,
+        params: {
+          fileName: videoFile?.name || "uploaded_video.mp4",
+          isSynthetic: synResult.isSynthetic,
+          probability: synResult.probability
+        }
+      });
+      toast("위조 판독 결과서가 내 작업함(Gallery)에 보관되었습니다.", "success");
+    } catch (e) {
+      toast("내 작업함 저장에 실패했습니다.", "error");
+    }
+  };
+
   const handleVideoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -50,7 +96,7 @@ export default function VideoStudio() {
   const runVideoUnderstanding = async () => {
     if (!videoFile || undIsLoading) return;
     if (!apiKey) {
-      alert("Configure your NVIDIA API Key in settings.");
+      toast("설정(Settings)에서 NVIDIA API Key를 먼저 등록해 주세요.", "error");
       return;
     }
 
@@ -107,7 +153,7 @@ export default function VideoStudio() {
   const runSyntheticDetection = async () => {
     if (!videoFile || synIsLoading) return;
     if (!apiKey) {
-      alert("Configure your NVIDIA API Key in settings.");
+      toast("설정(Settings)에서 NVIDIA API Key를 먼저 등록해 주세요.", "error");
       return;
     }
 
@@ -343,8 +389,19 @@ export default function VideoStudio() {
                     <p className="text-xs font-mono tracking-widest text-[#76b900]">DECODING FRAME TIMELINE...</p>
                   </div>
                 ) : (
-                  <div className="markdown-body">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{undResult}</ReactMarkdown>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-3 border-b border-neutral-900">
+                      <span className="text-[10px] text-neutral-500 uppercase font-bold tracking-widest">Video Understanding Result</span>
+                      <button
+                        onClick={handleSaveUnderstandingToGallery}
+                        className="text-[10px] font-bold px-3 py-1.5 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] rounded-lg transition cursor-pointer"
+                      >
+                        내 작업함에 저장
+                      </button>
+                    </div>
+                    <div className="markdown-body">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{undResult}</ReactMarkdown>
+                    </div>
                   </div>
                 )}
               </>
@@ -362,13 +419,21 @@ export default function VideoStudio() {
                   <div className="space-y-6">
                     <div className="flex items-center justify-between pb-4 border-b border-neutral-800">
                       <h3 className="text-base font-bold text-white tracking-wide">DETECTION REPORT</h3>
-                      <button
-                        onClick={downloadReport}
-                        className="text-xs font-semibold text-neutral-400 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <Download className="w-3.5 h-3.5 text-[#76b900]" />
-                        Download Report
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={handleSaveSyntheticToGallery}
+                          className="text-[10px] font-bold px-3 py-1.5 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] rounded-lg transition cursor-pointer flex items-center gap-1"
+                        >
+                          내 작업함에 저장
+                        </button>
+                        <button
+                          onClick={downloadReport}
+                          className="text-xs font-semibold text-neutral-400 hover:text-white transition flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Download className="w-3.5 h-3.5 text-[#76b900]" />
+                          Download Report
+                        </button>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-5">

@@ -50,22 +50,22 @@ export default function Sidebar({
 
   const navItems = isDevMode
     ? [
-        { id: "dashboard", label: "Dashboard (Mission Control)", icon: Home },
-        { id: "chat", label: "Chat Playground", icon: MessageSquare },
-        { id: "model-registry", label: "Model Registry", icon: Cpu },
-        { id: "compare-lab", label: "Compare Lab", icon: GitCompare },
-        { id: "tournament-arena", label: "Tournament Arena", icon: Trophy },
-        { id: "request-inspector", label: "Request Inspector", icon: Activity },
-        { id: "eval-set", label: "Prompt & Eval Set", icon: Award },
-        { id: "safety", label: "Safety Pipeline", icon: ShieldAlert },
-        { id: "logs", label: "Logs / Traces", icon: Activity },
-        { id: "deployment", label: "Deployment Wizard", icon: Server },
-        { id: "settings", label: "Settings", icon: Server },
+        { id: "dashboard", label: "대시보드 (Dashboard)", icon: Home },
+        { id: "chat", label: "챗 플레이그라운드 (Chat)", icon: MessageSquare },
+        { id: "model-registry", label: "모델 등록소 (Registry)", icon: Cpu },
+        { id: "compare-lab", label: "비교 실험실 (Compare)", icon: GitCompare },
+        { id: "tournament-arena", label: "토너먼트 아레나 (Arena)", icon: Trophy },
+        { id: "request-inspector", label: "요청 검사기 (Inspector)", icon: Activity },
+        { id: "eval-set", label: "프롬프트 평가 (Eval Set)", icon: Award },
+        { id: "safety", label: "보안 가드레일 (Safety)", icon: ShieldAlert },
+        { id: "logs", label: "로그 및 추적 (Logs)", icon: Activity },
+        { id: "deployment", label: "배포 마법사 (Deploy)", icon: Server },
+        { id: "settings", label: "설정 (Settings)", icon: Server },
       ]
     : [
         { id: "dashboard", label: "홈 (Home)", icon: Home },
         { id: "chat", label: "AI 채팅 (Chat)", icon: MessageSquare },
-        { id: "rag", label: "문서 질문하기 (Ask Docs)", icon: Database },
+        { id: "rag", label: "문서 질의 (Ask Docs)", icon: Database },
         { id: "vision", label: "이미지 분석 (Analyze)", icon: Eye },
         { id: "image-gen", label: "이미지 생성 (Create)", icon: ImageIcon },
         { id: "speech-video", label: "음성/영상 도구 (AV Tools)", icon: Mic },
@@ -112,7 +112,7 @@ export default function Sidebar({
               !isDevMode ? "text-black" : "text-neutral-550 hover:text-neutral-350"
             )}
           >
-            Use AI
+            AI 서비스 사용
           </button>
           
           <button
@@ -122,7 +122,7 @@ export default function Sidebar({
               isDevMode ? "text-black" : "text-neutral-550 hover:text-neutral-350"
             )}
           >
-            Build with NIM
+            NIM 개발 빌드
           </button>
         </div>
       </div>
@@ -154,7 +154,7 @@ export default function Sidebar({
                     className="w-full flex items-center gap-2 px-2 py-1.5 bg-neutral-900 hover:bg-neutral-850 text-white rounded text-[10px] font-semibold transition mb-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    New Conversation
+                    새 대화 시작
                   </button>
                   <div className="max-h-48 overflow-y-auto space-y-0.5 scrollbar-thin pr-1">
                     {sessions.map((session) => (
@@ -213,7 +213,7 @@ export default function Sidebar({
           className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-neutral-400 hover:text-red-400 hover:bg-neutral-900 rounded-lg transition"
         >
           <LogOut className="w-4 h-4" />
-          Sign out
+          로그아웃 (Sign out)
         </button>
       </div>
     </div>

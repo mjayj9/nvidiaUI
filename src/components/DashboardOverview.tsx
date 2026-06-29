@@ -11,7 +11,7 @@ export default function DashboardOverview({
 }: DashboardOverviewProps) {
   const { apiKey, model: selectedModel, isDevMode } = useWorkspace();
   const isConnected = !!apiKey;
-  const totalModels = modelRegistry.length;
+  const totalModels = modelRegistry.filter(m => m.provider !== "blackforestlabs" && m.provider !== "stabilityai").length;
 
   // General Mode Goals
   const generalGoals = [

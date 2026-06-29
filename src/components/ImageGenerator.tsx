@@ -1,7 +1,9 @@
-import { Download, ImageIcon, Loader2, Play, RefreshCw, Sparkles, X, ZoomIn } from "lucide-react";
+import { Download, ImageIcon, Loader2, Play, RefreshCw, Sparkles, X, ZoomIn, FolderHeart } from "lucide-react";
 import { useState } from "react";
 import { modelRegistry } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { useToast } from "../context/ToastContext";
+import { saveWorkToGallery } from "../lib/savedWorksLogger";
 
 interface GeneratedImage {
   id: string;
@@ -13,6 +15,7 @@ interface GeneratedImage {
 
 export default function ImageGenerator() {
   const { apiKey } = useWorkspace();
+  const { toast } = useToast();
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [activeModel, setActiveModel] = useState("black-forest-labs/FLUX.1-schnell");
@@ -28,7 +31,7 @@ export default function ImageGenerator() {
   const handleGenerate = async () => {
     if (!prompt.trim() || isLoading) return;
     if (!apiKey) {
-      alert("Please configure your NVIDIA API Key in Settings.");
+      toast("설정(Settings)에서 NVIDIA API Key를 먼저 등록해 주세요.", "error");
       return;
     }
 
@@ -182,9 +185,9 @@ export default function ImageGenerator() {
       } catch (err) {}
       
       if (errorMsg.includes("Not found for account") || errorMsg.includes("Function") || errorMsg.includes("404")) {
-        alert(`Image Generation Failed: ${errorMsg}\n\n[도움말] 사용하신 API Key 계정에 해당 모델(Stable Diffusion 등)의 권한이 없거나 모델이 만료되었습니다. build.nvidia.com에서 라이선스 동의를 마쳤는지 확인하시거나, 별도 동의 없이 즉시 무료로 사용 가능한 'FLUX.1 Schnell' 모델을 선택해 보세요.`);
+        toast(`이미지 생성 실패: 사용하신 API Key 계정에 해당 모델 권한이 없거나 만료되었습니다.`, "error");
       } else {
-        alert(`Image Generation Failed: ${errorMsg}`);
+        toast(`이미지 생성 실패: ${errorMsg}`, "error");
       }
     } finally {
       setIsLoading(false);
@@ -224,6 +227,25 @@ export default function ImageGenerator() {
     setActiveModel(img.model);
     setSeed(img.seed);
     setSelectedImage(null);
+  };
+
+  const handleSaveToGallery = (img: GeneratedImage) => {
+    try {
+      saveWorkToGallery({
+        type: "image-gen",
+        title: `[AI 이미지] ${img.prompt.slice(0, 30)}${img.prompt.length > 30 ? "..." : ""}`,
+        content: img.prompt,
+        mediaUrl: img.url,
+        params: {
+          prompt: img.prompt,
+          model: img.model,
+          seed: img.seed
+        }
+      });
+      toast("생성된 이미지가 내 작업함(Gallery)에 보관되었습니다.", "success");
+    } catch (e) {
+      toast("내 작업함 저장에 실패했습니다.", "error");
+    }
   };
 
   return (
@@ -454,7 +476,14 @@ export default function ImageGenerator() {
                 </div>
               </div>
 
-              <div className="mt-8 flex gap-3 shrink-0">
+              <div className="mt-8 flex gap-2 shrink-0">
+                <button
+                  onClick={() => handleSaveToGallery(selectedImage)}
+                  className="px-4 py-3 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <FolderHeart className="w-3.5 h-3.5" />
+                  내 작업함 저장
+                </button>
                 <button
                   onClick={() => handleReusePrompt(selectedImage)}
                   className="flex-1 py-3 bg-neutral-900 border border-neutral-850 hover:border-[#76b900]/50 hover:bg-[#76b900]/5 text-white rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer"

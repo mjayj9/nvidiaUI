@@ -28,6 +28,7 @@ import { cn } from "../lib/utils";
 import { getModelType, hasThinkingMode, NIM_MODELS } from "../models";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { useToast } from "../context/ToastContext";
+import { logActivity } from "../lib/activityLogger";
 import CodeExportModal from "./CodeExportModal";
 import { Check, Copy } from "lucide-react";
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
@@ -515,12 +516,14 @@ NVIDIA NIM(Inference Microservices)의 대표적인 장점은 다음과 같습�
           activeModel
         );
         setMessages((prev) => [...prev, aiMessage]);
+        logActivity("AI Chat Inference", activeModel, `Prompt: "${input.slice(0, 45)}${input.length > 45 ? '...' : ''}" completed successfully.`, "success");
       }
       setStreamingContent("");
     } catch (error: any) {
       console.error("Chat error:", error);
       const errorMessage =
         error.message || "An error occurred during generation.";
+      logActivity("AI Chat Inference", activeModel, `Failed chat: ${errorMessage}`, "failed");
 
       // Ensure we display raw JSON or text in a red box if possible
       const formattedError = `ERROR_PAYLOAD:\n${errorMessage}`;

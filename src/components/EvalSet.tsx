@@ -18,6 +18,8 @@ import {
   History,
   TrendingUp,
 } from "lucide-react";
+import { saveWorkToGallery } from "../lib/savedWorksLogger";
+import { logActivity } from "../lib/activityLogger";
 
 interface EvalPrompt {
   id: string;
@@ -71,14 +73,28 @@ const DEFAULT_PROMPTS: EvalPrompt[] = [
 ];
 
 export default function EvalSet() {
-  const { apiKey } = useWorkspace();
+  const { apiKey, model: contextModel } = useWorkspace();
   const { toast } = useToast();
 
-  const [prompts, setPrompts] = useState<EvalPrompt[]>(DEFAULT_PROMPTS);
-  const [selectedModels, setSelectedModels] = useState<string[]>([
-    "meta/llama-3.1-8b-instruct",
-    "meta/llama-3.1-70b-instruct",
-  ]);
+  const [prompts, setPrompts] = useState<EvalPrompt[]>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("nim_eval_prompts");
+      return saved ? JSON.parse(saved) : DEFAULT_PROMPTS;
+    }
+    return DEFAULT_PROMPTS;
+  });
+
+  const [selectedModels, setSelectedModels] = useState<string[]>(() => {
+    const textOnlyIds = NIM_MODELS.filter(m => m.type === "TEXT").map(m => m.id);
+    if (contextModel && textOnlyIds.includes(contextModel)) {
+      return [contextModel];
+    }
+    return textOnlyIds[0] ? [textOnlyIds[0]] : [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("nim_eval_prompts", JSON.stringify(prompts));
+  }, [prompts]);
 
   const [newPromptText, setNewPromptText] = useState("");
   const [newExpected, setNewExpected] = useState("");
@@ -96,7 +112,7 @@ export default function EvalSet() {
     return [];
   });
 
-  const textModels = NIM_MODELS.filter((m) => m.type === "TEXT" || m.capabilities.includes("chat"));
+  const textModels = NIM_MODELS.filter((m) => m.type === "TEXT");
 
   const handleAddPrompt = () => {
     if (!newPromptText.trim()) return;
@@ -125,8 +141,8 @@ export default function EvalSet() {
       }
       setSelectedModels((prev) => prev.filter((id) => id !== modelId));
     } else {
-      if (selectedModels.length >= 3) {
-        toast("동시 평가는 최대 3개 모델까지 가능합니다.", "error");
+      if (selectedModels.length >= 5) {
+        toast("동시 평가는 최대 5개 모델까지 가능합니다.", "error");
         return;
       }
       setSelectedModels((prev) => [...prev, modelId]);
@@ -205,6 +221,7 @@ export default function EvalSet() {
       }
     }
     setIsRunning(false);
+    logActivity("Prompt & Eval Set", selectedModels.join(", "), `Bulk evaluation run of ${prompts.length} prompts against ${selectedModels.length} models finished.`, "success");
     toast("평가 실행이 완료되었습니다. 채점을 완료해 주세요.", "success");
   };
 
@@ -347,9 +364,9 @@ export default function EvalSet() {
 
           {/* Model Registry Selection */}
           <div className="nvidia-glass rounded-2xl p-5 border border-neutral-900 shadow-xl space-y-4">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Target Models (Max 3)</h3>
+            <h3 className="text-xs font-bold text-white uppercase tracking-wider">Target Models (Max 5)</h3>
             <div className="grid grid-cols-1 gap-2 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin">
-              {textModels.slice(0, 15).map((m) => {
+              {textModels.map((m) => {
                 const isSelected = selectedModels.includes(m.id);
                 return (
                   <div
@@ -383,13 +400,54 @@ export default function EvalSet() {
               </div>
               <div className="flex gap-2">
                 {results.length > 0 && (
-                  <button
-                    onClick={handleSaveRun}
-                    disabled={isRunning}
-                    className="px-4 py-2 bg-neutral-900 hover:bg-neutral-850 text-white font-semibold rounded-lg text-xs border border-neutral-800 transition cursor-pointer disabled:opacity-50"
-                  >
-                    Log to History
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        if (results.length === 0) return;
+                        const passCount = results.filter(r => r.score.pass === true).length;
+                        const scoredCount = results.filter(r => r.score.pass !== null).length;
+                        const rate = scoredCount > 0 ? ((passCount / scoredCount) * 100).toFixed(1) : "0.0";
+                        const summary = `전체 프롬프트 평가 통과율: ${rate}% (${passCount}/${scoredCount} 통과)`;
+                        const detailsMarkdown = `### 프롬프트 벌크 평가 결과 보고서
+**통과율:** ${rate}% (${passCount}/${scoredCount} 통과)
+
+| 프롬프트 | 모델명 | 통과 여부 | 점수 | 평가 피드백 |
+| :--- | :--- | :--- | :--- | :--- |
+${results.map(r => {
+  const pText = prompts.find(p => p.id === r.promptId)?.prompt.slice(0, 30) || "프롬프트";
+  const passStr = r.score.pass === true ? "✅ PASS" : r.score.pass === false ? "❌ FAIL" : "⚠️ N/A";
+  return `| ${pText} | ${r.modelId.split("/").pop()} | ${passStr} | ${r.score.accuracy}/5 | ${r.notes || "피드백 없음"} |`;
+}).join("\n")}
+`;
+                        try {
+                          saveWorkToGallery({
+                            type: "eval",
+                            title: `[평가 보고서] 통과율 ${rate}% (${passCount}/${scoredCount} 완료)`,
+                            content: summary,
+                            details: detailsMarkdown,
+                            params: {
+                              resultsCount: results.length,
+                              passRate: rate,
+                              selectedModels
+                            }
+                          });
+                          toast("평가 보고서가 내 작업함(Gallery)에 보관되었습니다.", "success");
+                        } catch (e) {
+                          toast("내 작업함 저장에 실패했습니다.", "error");
+                        }
+                      }}
+                      className="px-4 py-2 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] font-semibold rounded-lg text-xs transition cursor-pointer"
+                    >
+                      내 작업함에 저장
+                    </button>
+                    <button
+                      onClick={handleSaveRun}
+                      disabled={isRunning}
+                      className="px-4 py-2 bg-neutral-900 hover:bg-neutral-850 text-white font-semibold rounded-lg text-xs border border-neutral-800 transition cursor-pointer disabled:opacity-50"
+                    >
+                      Log to History
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={runBulkEvaluation}
@@ -422,7 +480,7 @@ export default function EvalSet() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 animate-in fade-in duration-250">
                       {selectedModels.map((m) => {
                         const cell = results.find((r) => r.promptId === p.id && r.modelId === m);
                         if (!cell) return null;

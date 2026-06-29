@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { FolderHeart, Star, Share2, FileDown, Play, Trash2, Calendar, FileText, Image as ImageIcon, MessageSquare, Mic, Video, Search } from "lucide-react";
+import { FolderHeart, Star, Share2, FileDown, Play, Trash2, Calendar, FileText, Image as ImageIcon, MessageSquare, Mic, Video, Search, GitCompare, Award } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 
 interface SavedWorkItem {
   id: string;
-  type: "chat" | "rag" | "vision" | "image-gen" | "speech" | "video";
+  type: "chat" | "rag" | "vision" | "image-gen" | "speech" | "video" | "compare" | "eval";
   title: string;
   content: string;
   details?: string;
@@ -153,6 +153,8 @@ export default function SavedWorks({
       case "image-gen": return ImageIcon;
       case "speech": return Mic;
       case "video": return Video;
+      case "compare": return GitCompare;
+      case "eval": return Award;
       default: return FileText;
     }
   };
@@ -192,6 +194,8 @@ export default function SavedWorks({
               <option value="image-gen">이미지 생성</option>
               <option value="speech">음성 도구</option>
               <option value="video">영상 도구</option>
+              <option value="compare">비교 실험실 (Compare)</option>
+              <option value="eval">프롬프트 평가 (Eval)</option>
             </select>
 
             <button

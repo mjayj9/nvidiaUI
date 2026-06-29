@@ -1,6 +1,8 @@
 import { AlertCircle, CheckCircle, Download, Loader2, Mic, MicOff, Music, Play, Volume2, X } from "lucide-react";
 import { useState, useRef } from "react";
 import { useWorkspace } from "../context/WorkspaceContext";
+import { useToast } from "../context/ToastContext";
+import { saveWorkToGallery } from "../lib/savedWorksLogger";
 
 function createSineWaveWavBlob(duration = 2, freq = 440, sampleRate = 16000) {
   const numChannels = 1;
@@ -48,6 +50,7 @@ function createSineWaveWavBlob(duration = 2, freq = 440, sampleRate = 16000) {
 
 export default function SpeechHub() {
   const { apiKey } = useWorkspace();
+  const { toast } = useToast();
   const [activeSubTab, setActiveSubTab] = useState<"asr" | "tts" | "bnr">("asr");
 
   // ASR State
@@ -58,6 +61,24 @@ export default function SpeechHub() {
   const asrFileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+
+  const handleSaveToGallery = () => {
+    if (!asrResult) return;
+    try {
+      saveWorkToGallery({
+        type: "speech",
+        title: `[음성 받아쓰기] ${asrFile?.name || "녹음 오디오"}`,
+        content: asrResult,
+        details: `### 음성 받아쓰기 (ASR) 결과\n**파일명:** ${asrFile?.name || "녹음 오디오"}\n\n**변환 텍스트:**\n${asrResult}`,
+        params: {
+          fileName: asrFile?.name || "recorded_audio.wav",
+        }
+      });
+      toast("받아쓰기 텍스트가 내 작업함(Gallery)에 보관되었습니다.", "success");
+    } catch (e) {
+      toast("내 작업함 저장에 실패했습니다.", "error");
+    }
+  };
 
   // TTS State
   const [ttsText, setTtsText] = useState("");
@@ -443,6 +464,12 @@ export default function SpeechHub() {
                   </span>
                   {asrResult && (
                     <div className="flex gap-2">
+                      <button
+                        onClick={handleSaveToGallery}
+                        className="text-[10px] font-bold px-3 py-1.5 bg-[#76b900]/10 border border-[#76b900]/30 hover:bg-[#76b900]/20 text-[#76b900] rounded-lg transition cursor-pointer"
+                      >
+                        내 작업함에 저장
+                      </button>
                       <button
                         onClick={() => exportAsr("txt")}
                         className="text-[10px] font-bold px-3 py-1.5 bg-[#090909] hover:bg-neutral-850 hover:border-[#76b900]/40 text-neutral-300 rounded-lg border border-neutral-800 transition cursor-pointer"
