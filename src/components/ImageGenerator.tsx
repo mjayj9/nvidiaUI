@@ -4,6 +4,7 @@ import { modelRegistry } from "../lib/modelRegistry";
 import { useWorkspace } from "../context/WorkspaceContext";
 import { useToast } from "../context/ToastContext";
 import { saveWorkToGallery } from "../lib/savedWorksLogger";
+import { chatWithNvidiaObject } from "../lib/nim";
 
 interface GeneratedImage {
   id: string;
@@ -14,9 +15,55 @@ interface GeneratedImage {
 }
 
 export default function ImageGenerator() {
-  const { apiKey } = useWorkspace();
+  const { apiKey, language } = useWorkspace();
   const { toast } = useToast();
   const [prompt, setPrompt] = useState("");
+  const [isEnhancing, setIsEnhancing] = useState(false);
+
+  const handleEnhancePrompt = async () => {
+    if (!prompt.trim() || isEnhancing) return;
+    if (!apiKey) {
+      toast(language === "ko" ? "설정(Settings)에서 NVIDIA API Key를 먼저 등록해 주세요." : "Please enter your NVIDIA API Key in Settings first.", "error");
+      return;
+    }
+
+    setIsEnhancing(true);
+    toast(language === "ko" ? "프롬프트를 다듬고 고도화하는 중입니다..." : "Enhancing prompt details...", "info");
+
+    try {
+      let enhancedResult = "";
+      const messages = [
+        {
+          role: "system",
+          content: "You are an expert prompt engineer for AI image generators like Stable Diffusion and FLUX. Your task is to translate the user's input into vivid English if it is in Korean, and expand it with descriptive keywords, artistic styles, camera angles, lighting details, and quality tags. Keep the response clean and return ONLY the final optimized prompt string, without any introduction, explanations, or quotes."
+        },
+        {
+          role: "user",
+          content: `Optimize and enhance this prompt: "${prompt}"`
+        }
+      ];
+
+      await chatWithNvidiaObject(
+        apiKey,
+        "meta/llama-3.1-8b-instruct",
+        messages,
+        (chunk) => {
+          enhancedResult += chunk;
+        }
+      );
+
+      const cleaned = enhancedResult.replace(/<think>[\s\S]*?<\/think>/g, "").replace(/`/g, "").trim();
+      if (cleaned) {
+        setPrompt(cleaned);
+        toast(language === "ko" ? "프롬프트 마법사가 프롬프트를 성공적으로 완성했습니다!" : "Prompt successfully enhanced!", "success");
+      }
+    } catch (e: any) {
+      console.error("Failed to enhance prompt", e);
+      toast(language === "ko" ? "프롬프트 고도화에 실패했습니다." : "Failed to enhance prompt.", "error");
+    } finally {
+      setIsEnhancing(false);
+    }
+  };
   const [negativePrompt, setNegativePrompt] = useState("");
   const [activeModel, setActiveModel] = useState("black-forest-labs/FLUX.1-schnell");
   const [aspectRatio, setAspectRatio] = useState("1:1");
@@ -262,7 +309,27 @@ export default function ImageGenerator() {
         <div className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
           {/* Prompt */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Prompt</label>
+            <div className="flex justify-between items-center">
+              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Prompt</label>
+              <button
+                type="button"
+                onClick={handleEnhancePrompt}
+                disabled={isEnhancing || !prompt.trim() || !apiKey}
+                className="flex items-center gap-1.5 text-[9px] font-bold text-[#76b900] hover:text-[#8adc12] disabled:text-neutral-600 bg-neutral-900 hover:bg-neutral-850 px-2 py-0.5 rounded border border-neutral-800 hover:border-neutral-700 transition cursor-pointer disabled:cursor-not-allowed select-none"
+              >
+                {isEnhancing ? (
+                  <>
+                    <Loader2 className="w-2.5 h-2.5 animate-spin" />
+                    {language === "ko" ? "고도화 중..." : "Enhancing..."}
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-2.5 h-2.5 fill-current" />
+                    {language === "ko" ? "프롬프트 마법사 ✨" : "Enhance Prompt ✨"}
+                  </>
+                )}
+              </button>
+            </div>
             <textarea
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}

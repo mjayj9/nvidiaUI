@@ -422,7 +422,35 @@ export default function VisionAnalyzer() {
 
             {/* Custom Prompt Override */}
             <div className="space-y-2">
-              <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Custom Prompt Override (Optional)</label>
+              <div className="flex justify-between items-center">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Custom Prompt Override (Optional)</label>
+                <span className="text-[9px] text-neutral-600 font-semibold uppercase tracking-wider">Quick Presets</span>
+              </div>
+              
+              <div className="flex flex-wrap gap-1.5 pb-1">
+                <button
+                  type="button"
+                  onClick={() => setPrompt("이 이미지의 전반적인 조명 방향과 그림자의 물리적 일관성을 예리하게 분석해줘. 광원의 각도와 실제 투영된 그림자가 수학적/기하학적으로 일치하는지 집중적으로 점검해줘.")}
+                  className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-750 text-neutral-400 hover:text-white rounded-md text-[9px] font-bold transition cursor-pointer select-none"
+                >
+                  🔍 조명/그림자 일관성 분석
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrompt("이 이미지에서 AI가 생성한 흔적(미세한 손가락 오류, 노이즈 패턴, 대칭 붕괴 아티팩트, 텍스처 불일치)을 예리하게 검출하고 판별해줘.")}
+                  className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-750 text-neutral-400 hover:text-white rounded-md text-[9px] font-bold transition cursor-pointer select-none"
+                >
+                  🤖 AI 생성 아티팩트 판별
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPrompt("이 이미지 내부에 기재된 모든 텍스트 문구(간판, 책 글귀, 문서 내용 등)를 누락 없이 그대로 추출해서 텍스트로 옮겨줘.")}
+                  className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-750 text-neutral-400 hover:text-white rounded-md text-[9px] font-bold transition cursor-pointer select-none"
+                >
+                  📝 이미지 텍스트 추출
+                </button>
+              </div>
+
               <textarea
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}

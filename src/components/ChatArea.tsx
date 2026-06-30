@@ -21,6 +21,9 @@ import {
 } from "lucide-react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { Message, ChatSession, Attachment } from "../types";
 import { getMessages, addMessage, uploadFile, updateSessionSettings, saveChatSnapshot } from "../lib/api";
 import { chatWithNvidiaObject, NimMetrics } from "../lib/nim";
@@ -109,7 +112,7 @@ function MessageWithReasoning({ content }: { content: string }) {
 
         {restContent && (
           <div className="markdown-body mt-2">
-            <Markdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock as any }}>{restContent}</Markdown>
+            <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{ code: CodeBlock as any }}>{restContent}</Markdown>
           </div>
         )}
       </div>
@@ -182,7 +185,7 @@ function MessageWithReasoning({ content }: { content: string }) {
 
   return (
     <div className="markdown-body">
-      <Markdown remarkPlugins={[remarkGfm]} components={{ code: CodeBlock as any }}>{content}</Markdown>
+      <Markdown remarkPlugins={[remarkGfm, remarkMath]} rehypePlugins={[rehypeKatex]} components={{ code: CodeBlock as any }}>{content}</Markdown>
     </div>
   );
 }
@@ -202,7 +205,7 @@ export default function ChatArea({
   onToggleHistory,
   onForkSession,
 }: ChatAreaProps) {
-  const { apiKey, model, sessions, updateSessionTitle, isDevMode, generalPreset, setGeneralPreset, setActiveTab } = useWorkspace();
+  const { apiKey, model, sessions, updateSessionTitle, isDevMode, generalPreset, setGeneralPreset, setActiveTab, language } = useWorkspace();
   const { toast } = useToast();
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -225,6 +228,125 @@ export default function ChatArea({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isScrolledUp, setIsScrolledUp] = useState(false);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const handleScroll = () => {
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    if (distanceFromBottom > 150) {
+      setIsScrolledUp(true);
+    } else {
+      setIsScrolledUp(false);
+    }
+  };
+
+  const handleCopyMessage = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedMessageId(id);
+    toast(language === "ko" ? "텍스트가 클립보드에 복사되었습니다." : "Copied to clipboard.", "success");
+    setTimeout(() => setCopiedMessageId(null), 2000);
+  };
+
+  const handleRegenerate = async () => {
+    if (isGenerating) return;
+
+    let lastUserIndex = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === "user") {
+        lastUserIndex = i;
+        break;
+      }
+    }
+
+    if (lastUserIndex === -1) return;
+
+    const rolledBackMessages = messages.slice(0, lastUserIndex + 1);
+    setMessages(rolledBackMessages);
+
+    setIsGenerating(true);
+    setStreamingContent("");
+    setLastMetrics(null);
+
+    const controller = new AbortController();
+    setAbortController(controller);
+
+    try {
+      const apiMessages = rolledBackMessages.map((m) => {
+        if (m.attachments && m.attachments.length > 0 && m.attachments[0].type.startsWith("image/")) {
+          return {
+            role: m.role,
+            content: [
+              { type: "text", text: m.content || "Image" },
+              {
+                type: "image_url",
+                image_url: { url: m.attachments[0].url },
+              },
+            ],
+          };
+        }
+        return { role: m.role, content: m.content };
+      });
+
+      let finalContent = "";
+      const isThinking = isThinkingMode && currentSession?.thinkingEnabled;
+      const extraPayload: any = {};
+      if (isThinking) {
+        extraPayload.reasoning_effort = currentSession?.reasoningEffort || "high";
+      }
+
+      await chatWithNvidiaObject(
+        apiKey,
+        activeModel,
+        apiMessages,
+        (chunk) => {
+          finalContent += chunk;
+          setStreamingContent(finalContent);
+        },
+        {
+          temperature: currentSession?.temperature ?? 1,
+          topP: currentSession?.topP ?? 0.95,
+          maxTokens: currentSession?.maxTokens ?? 16384,
+          systemPrompt: currentSession?.systemPrompt,
+          responseFormat: currentSession?.responseFormat,
+          toolsJson: currentSession?.toolsJson,
+          stop: currentSession?.stop,
+          seed: currentSession?.seed,
+          frequencyPenalty: currentSession?.frequencyPenalty,
+          presencePenalty: currentSession?.presencePenalty,
+          abortSignal: controller.signal,
+          onMetrics: (metrics) => setLastMetrics(metrics),
+          ...extraPayload
+        },
+      );
+
+      if (finalContent) {
+        const aiMessage = await addMessage(
+          sessionId,
+          "assistant",
+          finalContent,
+          undefined,
+          activeModel
+        );
+        setMessages((prev) => [...prev, aiMessage]);
+        logActivity("AI Chat Inference", activeModel, "Regeneration completed successfully.", "success");
+      }
+      setStreamingContent("");
+    } catch (error: any) {
+      console.error("Regenerate error:", error);
+      const errorMessage = error.message || "An error occurred during generation.";
+      logActivity("AI Chat Inference", activeModel, `Failed regenerate: ${errorMessage}`, "failed");
+      const formattedError = `ERROR_PAYLOAD:\n${errorMessage}`;
+      const systemMessage = await addMessage(sessionId, "system", formattedError);
+      setMessages((prev) => [...prev, systemMessage]);
+      setStreamingContent("");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const chatCapableModels = NIM_MODELS.filter(m => 
     m.capabilities.includes("chat") || m.capabilities.includes("reasoning")
@@ -259,8 +381,10 @@ export default function ChatArea({
   }, [sessionId]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent]);
+    if (!isScrolledUp) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages, streamingContent, isScrolledUp]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -684,10 +808,14 @@ NVIDIA NIM(Inference Microservices)의 대표적인 장점은 다음과 같습�
         )}
 
         {/* Messages */}
-        <div className={cn(
-          "flex-1 overflow-y-auto px-4 md:px-8 pb-6 w-full max-w-4xl mx-auto flex flex-col gap-6 scrollbar-thin scrollbar-thumb-neutral-800",
-          apiKey ? "pt-20" : "pt-28"
-        )}>
+        <div
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          className={cn(
+            "flex-1 overflow-y-auto px-4 md:px-8 pb-6 w-full max-w-4xl mx-auto flex flex-col gap-6 scrollbar-thin scrollbar-thumb-neutral-800",
+            apiKey ? "pt-20" : "pt-28"
+          )}
+        >
           
           {isDevMode && lastMetrics && (
             <div className="w-full bg-[#111] border border-neutral-800 rounded-xl p-3 md:p-4 flex flex-col gap-3 md:gap-4 text-xs font-mono text-neutral-400 mb-4 transition-all">
@@ -845,11 +973,34 @@ NVIDIA NIM(Inference Microservices)의 대표적인 장점은 다음과 같습�
                 ) : (
                   <div className="flex flex-col gap-2">
                     <MessageWithReasoning content={m.content} />
-                    {m.model && (
-                      <div className="self-start text-[10px] text-neutral-500 bg-neutral-800/50 px-2 py-0.5 rounded border border-neutral-800 mt-2">
-                        이 답변을 생성한 모델: {NIM_MODELS.find(x => x.id === m.model)?.name || m.model}
+                    <div className="flex items-center justify-between mt-2 flex-wrap gap-2">
+                      {m.model && (
+                        <div className="text-[10px] text-neutral-500 bg-neutral-800/50 px-2 py-0.5 rounded border border-neutral-800">
+                          {language === "ko" ? "모델" : "Model"}: {NIM_MODELS.find(x => x.id === m.model)?.name || m.model}
+                        </div>
+                      )}
+                      <div className="flex items-center gap-1.5 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => handleCopyMessage(m.id, m.content)}
+                          className="p-1 text-neutral-500 hover:text-white hover:bg-neutral-800 rounded transition cursor-pointer"
+                          title={language === "ko" ? "복사" : "Copy"}
+                        >
+                          {copiedMessageId === m.id ? (
+                            <Check className="w-3.5 h-3.5 text-[#76b900]" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          onClick={handleRegenerate}
+                          disabled={isGenerating}
+                          className="p-1 text-neutral-500 hover:text-white hover:bg-neutral-850 rounded transition cursor-pointer disabled:opacity-50"
+                          title={language === "ko" ? "다시 생성" : "Regenerate"}
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        </button>
                       </div>
-                    )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -885,6 +1036,18 @@ NVIDIA NIM(Inference Microservices)의 대표적인 장점은 다음과 같습�
           )}
           <div ref={messagesEndRef} />
         </div>
+
+        {isScrolledUp && (
+          <button
+            onClick={() => {
+              setIsScrolledUp(false);
+              messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }}
+            className="absolute bottom-28 right-8 bg-[#76b900] hover:bg-[#66a000] text-black font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-full shadow-[0_4px_12px_rgba(118,185,0,0.35)] transition-all flex items-center gap-1.5 z-40 animate-bounce cursor-pointer"
+          >
+            <span>⬇️ {language === "ko" ? "새 메시지 확인" : "New Messages"}</span>
+          </button>
+        )}
 
         {/* Input Area */}
         <div className="p-4 pb-8 shrink-0 w-full relative max-w-4xl mx-auto flex flex-col gap-2">
@@ -943,20 +1106,66 @@ NVIDIA NIM(Inference Microservices)의 대표적인 장점은 다음과 같습�
           {/* Textbox Area */}
           <div className="relative bg-[#0d0d0d] border border-neutral-700 rounded-xl flex flex-col p-2 pt-3 transition-all focus-within:border-neutral-500">
             {selectedFile && (
-              <div className="flex items-center gap-2 p-2 mx-2 mb-2 bg-neutral-800/50 rounded-lg w-max border border-neutral-700">
-                <Paperclip className="w-4 h-4 text-neutral-400" />
-                <span className="text-xs text-neutral-300 max-w-[150px] truncate">
-                  {selectedFile.name}
-                </span>
+              <div className="relative inline-block m-2 w-max">
+                {selectedFile.type.startsWith("image/") && fileBase64 ? (
+                  <div className="relative group">
+                    <img
+                      src={fileBase64}
+                      alt="preview"
+                      className="h-16 w-16 object-cover rounded-lg border border-neutral-700 shadow-md"
+                    />
+                    <button
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setFileBase64(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="absolute -top-2 -right-2 bg-neutral-800 rounded-full p-1 border border-neutral-600 hover:text-white transition cursor-pointer shadow-lg"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 p-2 bg-neutral-800/50 rounded-lg w-max border border-neutral-700">
+                    <Paperclip className="w-4 h-4 text-neutral-400" />
+                    <span className="text-xs text-neutral-300 max-w-[150px] truncate">
+                      {selectedFile.name}
+                    </span>
+                    <button
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setFileBase64(null);
+                        if (fileInputRef.current) fileInputRef.current.value = "";
+                      }}
+                      className="text-neutral-500 hover:text-white p-0.5 ml-1 cursor-pointer"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Vision analyzer quick preset chips */}
+            {((selectedFile && selectedFile.type.startsWith("image/")) || isVisionMode) && (
+              <div className="flex flex-wrap gap-1.5 px-3 pb-2 animate-in fade-in duration-200">
                 <button
-                  onClick={() => {
-                    setSelectedFile(null);
-                    setFileBase64(null);
-                    if (fileInputRef.current) fileInputRef.current.value = "";
-                  }}
-                  className="text-neutral-500 hover:text-white p-0.5 ml-1"
+                  onClick={() => setInput(language === "ko" ? "이 이미지의 전반적인 조명 방향과 그림자의 물리적 일관성을 예리하게 분석해줘." : "Analyze the overall lighting direction and physical consistency of shadows in this image.")}
+                  className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-750 text-neutral-450 hover:text-white rounded-md text-[9px] font-bold tracking-wide transition cursor-pointer select-none"
                 >
-                  <X className="w-4 h-4" />
+                  🔍 {language === "ko" ? "조명/그림자 일관성 분석" : "Shadow & Light Consistency"}
+                </button>
+                <button
+                  onClick={() => setInput(language === "ko" ? "이 이미지에서 AI가 생성한 흔적(미세한 손가락 오류, 노이즈 패턴, 비대칭 아티팩트)을 예리하게 검출해줘." : "Scan this image for potential AI-generation artifacts such as finger glitches, noise patterns, or asymmetrical structures.")}
+                  className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-750 text-neutral-450 hover:text-white rounded-md text-[9px] font-bold tracking-wide transition cursor-pointer select-none"
+                >
+                  🤖 {language === "ko" ? "AI 생성 아티팩트 판별" : "AI Artifact Detection"}
+                </button>
+                <button
+                  onClick={() => setInput(language === "ko" ? "이 이미지 내부에 기재된 모든 텍스트 문구를 누락 없이 그대로 추출해서 텍스트로 옮겨줘." : "Extract all textual characters and overlay wording contained in this image as clean text.")}
+                  className="px-2 py-1 bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-750 text-neutral-450 hover:text-white rounded-md text-[9px] font-bold tracking-wide transition cursor-pointer select-none"
+                >
+                  📝 {language === "ko" ? "이미지 텍스트 추출" : "Image Text Extraction"}
                 </button>
               </div>
             )}

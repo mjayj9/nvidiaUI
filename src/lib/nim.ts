@@ -93,15 +93,29 @@ export const chatWithNvidiaObject = async (
   });
 
   try {
-    let res = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify(bodyObj),
-      signal: options?.abortSignal,
-    });
+    let res: Response;
+    try {
+      res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(bodyObj),
+        signal: options?.abortSignal,
+      });
+    } catch (netErr) {
+      console.warn("Express backend chat proxy failed due to network error. Falling back directly to NVIDIA API call.", netErr);
+      res = await fetch("https://integrate.api.nvidia.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify(bodyObj),
+        signal: options?.abortSignal,
+      });
+    }
 
     if (res.status === 404) {
       console.warn("Express backend chat proxy returned 404. Falling back to direct browser-to-NVIDIA API call.");
@@ -228,12 +242,18 @@ export const chatWithNvidiaObject = async (
       });
       return;
     }
+    
+    let displayMessage = error.message || String(error);
+    if (displayMessage.toLowerCase().includes("failed to fetch")) {
+      displayMessage = "Network Connection Error: Failed to reach the NVIDIA NIM endpoints. Please check your internet connection or verify your API keys.";
+    }
+
     console.error("NVIDIA API call failed", error);
     RequestLogger.updateResponse(reqId, {
       responseStatus: 500,
-      error: error.message || String(error)
+      error: displayMessage
     });
-    throw error;
+    throw new Error(displayMessage);
   }
 };
 
