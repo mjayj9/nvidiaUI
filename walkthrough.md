@@ -1,49 +1,60 @@
-# Walkthrough - NIM Playground Model Filters, Logs & Gallery Integrations
+# Walkthrough - LaTeX Math Support, Vision Presets, Smart Scrolling & Prompt Enhancer
 
-NVIDIA NIM 플레이그라운드 전반의 모델 필터링 오류 해결, 프롬프트 대량 평가기 개선, 세션별 로그 추적, 보안 강화(API Key 마스킹), 내 작업함(갤러리) 저장기능 연동, 다국어 번역 및 원격 Git 업로드가 완료되었습니다.
+NVIDIA NIM 플레이그라운드 전반의 UX(사용자 경험) 향상 및 LaTeX 수식 렌더링 지원, 이미지 업로드 썸네일 개선, 프롬프트 마법사(Enhancer), 스마트 자동 스크롤 및 에러 방어 로직 고도화가 성공적으로 완료되었습니다.
 
 ---
 
 ## 1. 구현된 주요 변경 사항 (Key Implementations)
 
-### 1.1 한국어 / 영어 다국어 번역 토글 추가 (Multi-language Support)
-- **인터페이스 언어 선택 기능**:
-  - `WorkspaceContext.tsx` 내에 `language` state (`"ko" | "en"`) 및 `setLanguage` 함수를 선언하고, localStorage(`nim_language`)를 통해 상태를 기억하도록 구현했습니다.
-  - 화면 좌측 사이드바(`Sidebar.tsx`) 하단에 한국어(KO)와 영어(EN)를 자유롭게 토글할 수 있는 언어 선택 버튼을 추가했습니다.
-  - 사이드바 네비게이션 탭 레이블("대시보드", "챗 플레이그라운드", "문서 질의" 등)과 "새 대화 시작", "로그아웃", 모드 스위치 텍스트 등이 선택한 언어에 맞춰 실시간으로 동적 변경됩니다.
-  - 내 작업함(`SavedWorks.tsx`) 내부의 전체 검색창 플레이스홀더, 분류 필터 드롭다운, 정렬 단추, 상세 요약 헤더 및 버튼 텍스트 등을 다국어 대응 완료했습니다.
+### 1.1 LaTeX 수식 렌더링 지원 (remark-math, rehype-katex)
+- **수식 렌더링 플러그인 탑재**:
+  - `remark-math` 및 `rehype-katex` 패키지를 설치하고, `katex/dist/katex.min.css` 수식용 스타일링 리소스를 불러왔습니다.
+  - `ChatArea.tsx` 내의 마크다운 렌더러에 해당 플러그인들을 주입하여 복잡한 인라인 수식 `\(...\)` 및 블록 수식 `$$...$$`이 깨지지 않고 미려한 기호로 포맷팅되도록 보장했습니다.
+  - 이를 통해 대학 수학 증명이나 코딩 공식, 논문 해설 질의 시 응답 품질이 극대화되었습니다.
 
-### 1.2 내 작업함 (Gallery) 연동 및 Rerun 라우팅 수정
-- **Rerun 탭 이름 매핑 문제 해결**:
-  - 기존에는 갤러리에 저장된 작업 종류(`compare`, `eval`, `speech`, `video`)가 실제 라우팅용 탭 명칭(`compare-lab`, `eval-set`, `speech-video`)과 불일치하여 "다시 실행 (Rerun)" 클릭 시 비어있는 탭으로 이동하거나 로딩에 실패하던 오류가 존재했습니다.
-  - `SavedWorks.tsx` 내 `handleRerun` 함수에서 카테고리 형식을 검사하여 유효한 탭 경로로 자동 리다이렉트되도록 매핑 로직을 정교화했습니다.
-  - 삭제 확인 대화상자(`confirm`) 및 상태 변경 토스트 알림을 사용자의 인터페이스 언어 설정에 맞춰 번역 표기합니다.
+### 1.2 비전(Vision) 분석 퀵 프리셋 칩 추가
+- **대상 파일**: `ChatArea.tsx` 및 `VisionAnalyzer.tsx`
+- **반응형 칩 레이아웃**:
+  - 대화창에서 멀티모달 이미지 파일이 로드되었거나 활성화된 모델이 비전 분석 모델인 경우, 프롬프트 입력란 상단에 칩 형태의 빠른 템플릿 버튼들을 자동으로 노출합니다:
+    - 🔍 `조명/그림자 일관성 분석`
+    - 🤖 `AI 생성 아티팩트 판별`
+    - 📝 `이미지 텍스트 추출`
+  - 이 프리셋 버튼들을 클릭하면 사용자가 매번 긴 지시어 프롬프트를 타이핑할 필요 없이 즉석에서 템플릿이 입력란에 자동 매핑됩니다.
 
-### 1.3 활동 감사 로그 (Activity Audit Logs) 복원 및 로컬 안전 로그 병합
-- **로컬 보안 로그 통합**:
-  - 로컬 테스트 환경이나 서빙 API가 비활성화된 경우에도 로그가 제대로 보관 및 조회되도록, `SafetyGuard.tsx`에서 생성하는 로컬 안전 검사 필터링 기록(`nim_local_safety_logs`)을 `ActivityLogs.tsx`가 로컬 활동 로그(`nim_activity_logs`)와 실시간으로 함께 파싱하여 통합 출력하게 만들었습니다.
-  - 정렬 기준을 전체 시간순으로 재배치하여 사용자가 어떤 모델로 안전 검사 및 추론을 수행했는지 타임라인을 한눈에 확인할 수 있습니다.
-  - 드롭다운 필터에서 "보안 경고만 (Safety Alerts Only)" 옵션을 선택할 경우 차단(Blocked)되거나 검사된 보안성 이벤트가 온전히 필터링됩니다.
+### 1.3 스마트 자동 스크롤 및 메시지 액션 (Copy & Regenerate)
+- **스마트 스크롤 락 및 플로팅 복원 단추**:
+  - 사용자가 이전 메시지를 조회하기 위해 스크롤을 위로 올린 상태인 경우, 새로운 토큰 스트리밍이 들어오더라도 스크롤이 바닥으로 강제 튕기는 불편함을 제거했습니다.
+  - 위로 스크롤 시 화면 우측 하단에 **"⬇️ 새 메시지 확인"** 플로팅 단추가 생기며, 클릭 시 아래로 부드럽게 스냅 복구됩니다.
+- **개별 메시지 피드백 툴바**:
+  - assistant의 응답 말풍선 위에 마우스 커서를 올리면(Hover), 복사(Copy)와 재생성(Regenerate) 버튼 셋이 담긴 액션 툴바가 슬며시 표시되어(opacity) 대화 관리를 윤택하게 만듭니다.
+  - **다시 생성(Regenerate)** 클릭 시, 현재 세션의 마지막 유저 쿼리로 상태를 복원(Rollback)한 뒤 최신 파라미터 규격에 맞춰 추론을 재수행합니다.
 
-### 1.4 Firebase Analytics 활성화 및 사용자 카운트 복구
-- **액티브 유저 추적 활성화**:
-  - `src/lib/firebase.ts`에 Firebase Analytics의 `getAnalytics` 및 `isSupported`를 도입하여, 브라우저 환경에서 SDK가 초기화되도록 로직을 추가했습니다.
-  - 이로써, 실제 웹사이트에 접속한 2명의 사용자가 Firebase 콘솔 상에서 `0명`으로 집계되던 추적 누수 오류가 해결되었습니다.
+### 1.4 업로드된 이미지 썸네일 미리보기 기능
+- **텍스트 박스 프리뷰**:
+  - 기존에는 이미지를 끌어다 놓거나 첨부할 때 파일명 텍스트만 투박하게 표시되던 요소를 변경했습니다.
+  - Base64 리사이징 기법을 결합하여, 이미지 파일을 감지하면 전용 미니 썸네일 뷰어 및 절대 위치에 매핑된 **X (초기화) 버튼**을 띄워 완성도를 크게 끌어올렸습니다.
 
-### 1.5 텍스트 전용 모델 필터링 적용
-- **대상 파일**: `TournamentArena.tsx` (모델 토너먼트 아레나), `CompareLab.tsx` (모델 비교 실험실), `EvalSet.tsx` (프롬프트 대량 평가기)
-- **적용 사항**: `m.type === "TEXT"` 조건을 적용하여 이미지 생성, 비디오 판독, 임베딩, 오디오 및 안전 필터와 같은 비텍스트 멀티모달 모델들이 채팅 벤치마크에 노출되어 오작동 및 싱글 출력 오류를 유발하던 현상을 해결했습니다.
+### 1.5 이미지 생성기: 프롬프트 마법사 (Prompt Enhancer ✨)
+- **원클릭 프롬프트 고도화**:
+  - `ImageGenerator.tsx`의 입력 필드 우측에 프롬프트 마법사(`Enhance Prompt ✨`) 제어 단추를 통합했습니다.
+  - 사용자가 짧은 한글/영어 단어로 스케치를 입력하고 누르면, 백그라운드에서 현재 API 키를 활용해 가장 빠른 추론 엔진(`meta/llama-3.1-8b-instruct`)에 프롬프트 증강 요청을 비동기 송출합니다.
+  - AI 이미지 엔진(FLUX / Stable Diffusion)에 최적화된 사진용 세부 묘사 키워드, 스타일, 광원 태그를 자동 덧붙여서 한차원 높은 예술 일러스트를 연출해 냅니다.
+
+### 1.6 API 호출 안정성 보강 (CORS / 네트워크 예외 처리)
+- **bulletproof Fallback**:
+  - `nim.ts`에서 Express 포트 포워딩 실패(404)뿐만 아니라, 네트워크 장애, CORS 차단 등으로 fetch 자체가 Exception을 던질 때에도 즉시 direct browser-to-NVIDIA direct call로 우회 구동하도록 `try...catch` 예외 처리를 정밀화했습니다.
+  - 예기치 못한 에러 페이로드를 사용자 친화적 메시지로 정돈하여 보여주므로 시스템 중단을 완벽히 방어합니다.
 
 ---
 
 ## 2. 검증 및 배포 결과 (Verification & Deployment Results)
 
 ### 2.1 TypeScript 컴파일 및 프로덕션 빌드 성공
-Bypass 옵션과 함께 `npx tsc --noEmit`을 통한 전체 정적 검사 및 `npm run build` 번들 빌드를 수행하여 **오류 및 충돌 없음(0 error)** 상태를 최종 검증했습니다.
+`npx tsc --noEmit`을 통한 정적 타입 검사 결과 오류가 발견되지 않았으며(0 Error), `npm run build`를 통해 KaTeX 웹폰트 에셋 에셋 매핑 및 Vite 청크 빌드가 성공적으로 완결됨을 확인했습니다.
 
 ### 2.2 Git 원격 반영 완료
-로컬 저장소 커밋 후 최종 원격 저장소(`https://github.com/mjayj9/nvidiaUI`) `main` 브랜치에 성공적으로 push 하였습니다.
+수정된 6개 파일 및 walkthrough 문서를 origin main 브랜치에 성공적으로 동기화시켰습니다.
 ```bash
 To https://github.com/mjayj9/nvidiaUI.git
-   8cfe72d..b32a019  main -> main
+   f06426a..61d8479  main -> main
 ```
